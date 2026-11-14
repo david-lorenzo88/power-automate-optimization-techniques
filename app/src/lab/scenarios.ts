@@ -57,10 +57,10 @@ export const SCENARIOS: Scenario[] = [
     variants: {
       SLOW: { flow: 'UC4-SLOW', technique: 'Apply to each → Create item (concurrency 1)' },
       MID: { flow: 'UC4-MID', technique: 'Same loop, concurrency 50 (watch the 429 retries)' },
-      FAST: { flow: 'UC4-FAST', technique: '$batch via Send HTTP request to SharePoint (≤500 per batch)' },
+      FAST: { flow: 'UC4-FAST', technique: '$batch via Send HTTP request to SharePoint (250 per batch, 4 in parallel)' },
     },
     volumes: [100, 500, 1000, 2000], defaultVolume: 200, maxVolume: 5000,
-    options: [{ key: 'batchSize', label: 'Batch size', kind: 'select', default: 500, choices: [100, 250, 500] }],
+    options: [{ key: 'batchSize', label: 'Batch size', kind: 'select', default: 250, choices: [100, 250, 500] }],
     note: 'PoC: SharePoint stops a $batch after ~90 s of server time (≈900 items), and changesets are not atomic.',
   },
   {

@@ -236,26 +236,25 @@ export function buildLabFlows(cfg, ids = {}, { runnable } = {}) {
       },
     }));
   }
-  const BATCH = `min(max(int(coalesce(${pl('batchSize')}, 500)), 1), 500)`;
+  // PoC + lab: SharePoint works through a $batch serially (~100–170 ms per item) and stops after ~90 s,
+  // so FAST uses batches of 250 and sends 4 of them in parallel.
+  const BATCH = `min(max(int(coalesce(${pl('batchSize')}, 250)), 1), 500)`;
   add(benchmarkFlow(P, {
-    name: 'UC4-FAST', scenario: 'UC4', variant: 'FAST', technique: 'SharePoint $batch (≤500 per changeset, chunk() + Select)',
-    description: 'UC4 FAST: chunk() the rows into batches of ≤500 and create each batch with ONE $batch request (PoC: SharePoint times out ~90 s per batch).',
+    name: 'UC4-FAST', scenario: 'UC4', variant: 'FAST', technique: 'SharePoint $batch (250 per changeset, 4 batches in parallel)',
+    description: 'UC4 FAST: chunk() the rows into batches of 250 and send 4 $batch requests in parallel (SharePoint stops a batch after ~90 s).',
     apis: [SP], volumeDefault: 200, volumeMax: 5000,
-    vars: [{ name: 'Created', type: 'integer', value: 0 }],
     work: {
       ...crlf,
       Chunks: compose(`@chunk(range(0, ${VOL}), ${BATCH})`, after('CRLF')),
       Batch_loop: forEach("@outputs('Chunks')", {
         ...spBatch('B', "@items('Batch_loop')", createReq('OrderImport',
           `concat('{"__metadata":{"type":"${L.OrderImport.entityType}"},"Title":"', ${oiTitle('item()')}, '","Amount":', string(${data.amount('add(item(), 1)')}), ',"Region":"', ${data.region('item()')}, '","BatchTag":"', ${CORR}, '"}')`), {}),
-        Add_created: incVar('Created', `@${countIn("outputs('B_text')", 'HTTP/1.1 201')}`, after('B_text')),
-      }, after('Chunks')),
+      }, after('Chunks'), 4),
       Verify: uc4Verify(after('Batch_loop', ['Succeeded', 'Failed'])),
       Kpi: kpi({
         processed: "length(body('Verify')?['value'])", loops: "length(outputs('Chunks'))", calls: "add(length(outputs('Chunks')), 1)",
           statusExpr: `if(less(length(body('Verify')?['value']), ${VOL}), 'Partial', 'Succeeded')`,
         payload: '0', actions: `add(${BASE + 4}, mul(6, length(outputs('Chunks'))))`, checksum: uc4Check,
-        extra: { created201: "variables('Created')" },
       }, after('Verify')),
     },
   }));

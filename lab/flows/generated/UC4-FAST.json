@@ -108,7 +108,7 @@
               "item/pa_name": "@{coalesce(outputs('Payload')?['correlationId'], guid())}",
               "item/pa_scenario": "UC4",
               "item/pa_variant": "FAST",
-              "item/pa_technique": "SharePoint $batch (≤500 per changeset, chunk() + Select)",
+              "item/pa_technique": "SharePoint $batch (250 per changeset, 4 batches in parallel)",
               "item/pa_status": "Running",
               "item/pa_label": "@{outputs('Payload')?['label']}",
               "item/pa_volume": "@outputs('Volume')",
@@ -164,23 +164,6 @@
             ]
           }
         },
-        "Init_Created": {
-          "type": "InitializeVariable",
-          "inputs": {
-            "variables": [
-              {
-                "name": "Created",
-                "type": "integer",
-                "value": 0
-              }
-            ]
-          },
-          "runAfter": {
-            "Respond_to_app": [
-              "Succeeded"
-            ]
-          }
-        },
         "Work": {
           "type": "Scope",
           "actions": {
@@ -191,7 +174,7 @@
             },
             "Chunks": {
               "type": "Compose",
-              "inputs": "@chunk(range(0, outputs('Volume')), min(max(int(coalesce(outputs('Payload')?['batchSize'], 500)), 1), 500))",
+              "inputs": "@chunk(range(0, outputs('Volume')), min(max(int(coalesce(outputs('Payload')?['batchSize'], 250)), 1), 500))",
               "runAfter": {
                 "CRLF": [
                   "Succeeded"
@@ -266,18 +249,6 @@
                       "Failed"
                     ]
                   }
-                },
-                "Add_created": {
-                  "type": "IncrementVariable",
-                  "inputs": {
-                    "name": "Created",
-                    "value": "@sub(length(split(outputs('B_text'), 'HTTP/1.1 201')), 1)"
-                  },
-                  "runAfter": {
-                    "B_text": [
-                      "Succeeded"
-                    ]
-                  }
                 }
               },
               "runAfter": {
@@ -287,7 +258,7 @@
               },
               "runtimeConfiguration": {
                 "concurrency": {
-                  "repetitions": 1
+                  "repetitions": 4
                 }
               }
             },
@@ -326,7 +297,7 @@
                 "actionsEstimated": "@add(18, mul(6, length(outputs('Chunks'))))",
                 "payloadBytes": "@0",
                 "checksum": "@{concat(string(length(body('Verify')?['value'])), '|', formatNumber(float(xpath(xml(json(concat('{\"r\":{\"o\":', string(body('Verify')?['value']), '}}'))), 'sum(/r/o/Amount)')), '0.00', 'en-US'))}",
-                "created201": "@variables('Created')"
+                "status": "@{if(less(length(body('Verify')?['value']), outputs('Volume')), 'Partial', 'Succeeded')}"
               },
               "runAfter": {
                 "Verify": [
@@ -336,7 +307,7 @@
             }
           },
           "runAfter": {
-            "Init_Created": [
+            "Respond_to_app": [
               "Succeeded"
             ]
           }
@@ -367,7 +338,7 @@
             "parameters": {
               "entityName": "pa_benchmarkruns",
               "recordId": "@outputs('Create_run_row')?['body/pa_benchmarkrunid']",
-              "item/pa_status": "@{if(equals(actions('Work')?['status'], 'Succeeded'), coalesce(outputs('Kpi')?['status'], 'Succeeded'), 'Failed')}",
+              "item/pa_status": "@{coalesce(outputs('Kpi')?['status'], if(equals(actions('Work')?['status'], 'Succeeded'), 'Succeeded', 'Failed'))}",
               "item/pa_endtime": "@utcNow()",
               "item/pa_durationms": "@div(sub(ticks(utcNow()), ticks(outputs('Start'))), 10000)",
               "item/pa_recordsprocessed": "@outputs('Kpi')?['recordsProcessed']",
