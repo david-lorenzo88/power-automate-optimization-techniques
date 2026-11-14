@@ -58,6 +58,12 @@ async function ensureTable(schema, display, plural, primary, columns) {
       Attributes: [{ ...primary, IsPrimaryName: true }],
     }, solutionHeader());
     console.log(`✅ table ${logical} created`);
+    // New entity metadata can take a few seconds to become readable (404 right after create).
+    // Poll the Attributes endpoint itself: the entity GET can succeed before it does.
+    for (let i = 0; i < 30; i++) {
+      if ((await dv('GET', `EntityDefinitions(LogicalName='${logical}')/Attributes?$select=LogicalName`)).ok) break;
+      await new Promise((res) => setTimeout(res, 2000));
+    }
   } else {
     console.log(`ℹ️  table ${logical} exists (entity set: ${exists.json.EntitySetName})`);
   }
