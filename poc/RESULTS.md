@@ -9,13 +9,13 @@ Scripts and `pa` ran from a Linux cloud container (Node 22.23, Azure CLI 2.92.0,
 |---|---|---|---|
 | 1 | Code apps enabled + Premium | ✅ | Confirmed by the user in PPAC. Preflight: WhoAmI OK (699 ms), `flowrun` readable, prefix `pa` free. |
 | 2 | Solution, tables, flows created via script | ✅ | Publisher, solution, `pa_benchmarkrun`, `pa_orderimport` (+ alt key), 2 connection refs, and all 4 flows created **in the solution** via the Web API and turned on. Two setup errors, see *Issues*. |
-| 3 | `pa app add flow` + `Run()` works (T3) | ✅ | `pa app init`, `add data-source` and `add flow` ×4 all worked; the app found 1 table + 4 flow services by name. T3: `Run()` returned in 6.9 s (first call, includes warm-up) with the Respond body (`runid`, `runurl`, `respondedat`). Flow itself: 1.9 s. | `pa app init`, `add data-source` and `add flow` ×4 all worked and generated `Poc*Service.ts`. `Run()` result pending (app run). |
-| 4 | Respond early keeps the flow running (T4) | ✅ | Run() resolve time: **1.2 s**. The flow kept running and finished in 60.7 s (flowrun: 61.2 s). |
-| 5 | > 120 s: no-respond (T5a) / respond-late (T5b) | ⚠️ | Run() behaviour: **T5a (no Respond)**: `Run()` resolves in **0.7 s** (async/202) and the flow succeeds in 151 s, so it's fire-and-forget and the result has to come from `pa_benchmarkrun` polling. **T5b (Respond at end, 150 s)**: `Run()` **rejects after 120.3 s** with `{"code":"UnexpectedError","message":"An unexpected error occurred."}`, but the flow still **succeeds** in 150.4 s. The error is generic, not a timeout code, so the app can't tell it apart from a real failure. **Design rule:** any flow that can exceed ~120 s must respond early (or not at all) and report through Dataverse. |
-| 6 | Links: flows path / solutions path / edit / details, anchor vs window.open, local vs published | ⏳ | Published app only. Local Play can't be tested from the cloud container, because the browser can't reach its `localhost:3000`. |
+| 3 | `pa app add flow` + `Run()` works (T3) | ✅ | `pa app init`, `add data-source` and `add flow` ×4 all worked; the app found 1 table + 4 flow services by name. T3: `Run()` returned in 6.9 s (first call, includes warm-up) with the Respond body (`runid`, `runurl`, `respondedat`). Flow itself: 1.9 s. Second session: `Run()` 2.1 s. |
+| 4 | Respond early keeps the flow running (T4) | ✅ | Run() resolve time: **1.2 s / 0.8 s** (two sessions). The flow kept running and finished in 60.7 / 60.8 s (flowrun: 61.2 / 61.1 s). |
+| 5 | > 120 s: no-respond (T5a) / respond-late (T5b) | ⚠️ | Run() behaviour: **T5a (no Respond)**: `Run()` resolves in **0.5–0.7 s** (async/202) and the flow succeeds in ~150 s, so it's fire-and-forget and the result has to come from `pa_benchmarkrun` polling. **T5b (Respond at end, 150 s)**: `Run()` **rejects at 120 s**. The first session got a generic `{"code":"UnexpectedError"}`; the second got `{"error":{"code":"TimedOut","message":"Invocation of API timed out."}}`. The error shape isn't stable, so the app shouldn't rely on it. The flow's own work completes (`pa_benchmarkrun` = Succeeded, 150.5 s), but **`flowrun.status` = Failed**, because the Respond action fails once nobody is waiting. **Design rule:** any flow that can exceed ~120 s must respond early (or not at all) and report through Dataverse. A late Respond also turns the run red in run history. |
+| 6 | Links: flows path / solutions path / edit / details, anchor vs window.open, local vs published | ⚠️ | Published app: **works**: run via `/flows/{id}/runs/{runId}`, `/flows/{id}/details`, run URL built in-app from `getContext()`. **Broken**: run via `/solutions/~preferred/flows/{id}/runs/{runId}`, and `/flows/{id}/edit`. → Use the plain `/flows/` path for run and details links, and drop the solution-path and `/edit` links. The export has one verdict per link, not one per method (anchor vs window.open). Local Play not tested: it serves from `localhost:3000`, which a cloud container can't expose to the user's browser. |
 | 7 | CreateMultiple in "Perform a bound action" picker; script 03 timings | ⚠️ API ✅ / picker ⏳ | API: CreateMultiple 1000 rows in **10.1 s** in 1 request, vs ~182 s extrapolated for sequential single POSTs (~18×). UpdateMultiple 10.7 ms/row, UpsertMultiple (alt key) 34.6 ms/row. Picker check pending. |
-| 8 | SharePoint `$batch` limit (100/500/1000/2000) + changeset atomicity | ⏳ | List **PocImport** (Number column `Amount`) created on https://davidlorenzolopez.sharepoint.com via the bound SharePoint connection. |
-| 9 | flowrun cross-check + duration unit | ✅ | **`flowrun.duration` is in milliseconds** (T4: flow 60677 vs flowrun 61248; T5a: 150983 vs 151358; T3: 1862 vs 2378). flowrun is ~0.4–0.6 s longer, because it includes the trigger. New runs appear in `flowrun` only after a delay of a few minutes. `workflow()` tags include `xrmWorkflowId`, `logicAppName` (flow id), `environmentName`, `billingContext`, `licenseContextConfigName` (Premium). |
+| 8 | SharePoint `$batch` limit (100/500/1000/2000) + changeset atomicity | ⚠️ | List **PocImport** (Number `Amount`) on https://davidlorenzolopez.sharepoint.com. **100**: 100/100 ×4 runs (9.2–14.1 s). **500**: 500/500 ×2 (55.8 / 60.5 s). **1000**: **partial** ×2: 941/1000 (95.6 s) and 873/1000 (93.0 s). The outer `$batch` returns HTTP 200; SharePoint processes the parts **in order**, and every part after ~90 s of server time returns `500 Microsoft.SharePoint.Client.ClientServiceTimeoutException: The operation has timed out.` The limit is **time (~90 s per `$batch`)**, not a fixed item count, at ~95–110 ms/item. → **Use ≤ 500 items per `$batch`**, and count 5xx parts as well as 4xx (the export only shows 4xx). 2000 not run (1000 already times out). Changeset atomicity (100 + 1 invalid): ⏳ pending. |
+| 9 | flowrun cross-check + duration unit | ✅ | **`flowrun.duration` is in milliseconds** (T4: flow 60677 vs flowrun 61248; T5a: 150983 vs 151358; T3: 1862 vs 2378). flowrun is ~0.4–0.6 s longer, because it includes the trigger. New runs appear in `flowrun` only after a delay of a few minutes (some still missing 5+ min later). `flowrun.status` reflects the **whole run**: the T5b runs are *Failed* there while the flow's own telemetry says Succeeded (see #5), and T8-1000 *Partial* runs are *Failed*. `workflow()` tags include `xrmWorkflowId`, `logicAppName` (flow id), `environmentName`, `billingContext`, `licenseContextConfigName` (Premium). |
 
 ### Issues hit during setup
 
@@ -57,6 +57,28 @@ Environment: df93e55c-cf3b-e261-87e1-ddb2b052de1d · App URL: https://apps.power
 - flow: PocRespondEarlyService (../generated/services/PocRespondEarlyService.ts)
 - flow: PocRespondLateService (../generated/services/PocRespondLateService.ts)
 - flow: PocSpBatchService (../generated/services/PocSpBatchService.ts)
+
+### PoC results (2026-11-14T18:55:54.516Z), second session
+
+| Test | Checklist | Verdict | Notes | Correlation |
+|---|---|---|---|---|
+| T3 Invoke a flow from the Code App | #3 | pass | Run() ok in 2.1 s; response: {"runid":"08584069245352739383743956705CU31","runurl":"https://make.powerautomate.com/environments/df93e55c-cf3b-e261-87e1-ddb2b052de1d/flows/88346a50-54fa-4bba-ad73-2e885060481d/runs/08584069245352739383743956705CU31","respondedat":"2026-11-14T18:52:31.8728068Z"} | ab333e12-fab9-45cd-8cfd-ec7401179317 |
+| T4 Respond early, keep working (60 s) | #4 | pass | Run() resolved after 0.8 s (early ✅); flow duration 60.8 s (kept running ✅) | 61ed0e8a-a6e0-463a-8bbb-b437b1dd7dbf |
+| T5a > 120 s, no Respond action (150 s) | #5 | pass | Run() ok after 0.5 s; flow Succeeded in 150.2 s | e9f65758-4260-40e3-87f9-ac47fd65c7a2 |
+| T5b > 120 s, Respond at the end (150 s) | #5 | info | Run() error: {"error":{"code":"TimedOut","message":"Invocation of API timed out.","details":[]}} after 120.1 s; flow Succeeded in 150.5 s | 78b95fda-c309-484d-a46d-3d6564c6db52 |
+| T8-100 SharePoint $batch (100 items) | #8 | pass | HTTP 200, created 100/100, 4xx 0, batch call 9173 ms, payload 38855 bytes | c187ad84-97f6-460d-8f5a-002d1eebdb4d |
+| T8-500 SharePoint $batch (500 items) | #8 | pass | HTTP 200, created 500/500, 4xx 0, batch call 55804 ms, payload 194055 bytes | 2bb246ae-71a9-4deb-a6c1-edfd4e6b9a1a |
+| T8-1000 SharePoint $batch (1000 items) | #8 | info | HTTP 200, created 873/1000, 4xx 0, batch call 92997 ms, payload 388055 bytes | f08e88f8-d33e-4dce-a38a-cee3e1c3a923 |
+
+#### Links (#6)
+
+- Run (flows path): ok · `https://make.powerautomate.com/environments/df93e55c-cf3b-e261-87e1-ddb2b052de1d/flows/7c753364-30d6-1edc-f62f-707e0ec09d00/runs/08584069244388952803805661278CU05`
+- Run (solutions/~preferred path): broken · `https://make.powerautomate.com/environments/df93e55c-cf3b-e261-87e1-ddb2b052de1d/solutions/~preferred/flows/7c753364-30d6-1edc-f62f-707e0ec09d00/runs/08584069244388952803805661278CU05`
+- Edit flow (/edit): broken · `https://make.powerautomate.com/environments/df93e55c-cf3b-e261-87e1-ddb2b052de1d/flows/7c753364-30d6-1edc-f62f-707e0ec09d00/edit`
+- Flow details (/details): ok · `https://make.powerautomate.com/environments/df93e55c-cf3b-e261-87e1-ddb2b052de1d/flows/7c753364-30d6-1edc-f62f-707e0ec09d00/details`
+- Run (built in app from getContext): ok · `https://make.powerautomate.com/environments/df93e55c-cf3b-e261-87e1-ddb2b052de1d/flows/7c753364-30d6-1edc-f62f-707e0ec09d00/runs/08584069244388952803805661278CU05`
+
+T8-1000 detail (from the `pa_benchmarkrun` row and the run's `Response_text` output): run `08584069244388952803805661278CU05` got 873 × `201 Created`, then parts 874–1000 × `500 Internal Server Error`, `{"error":{"code":"-2146233083, Microsoft.SharePoint.Client.ClientServiceTimeoutException","message":{"lang":"en-US","value":"The operation has timed out."}}}`. The earlier 1000 run `08584069245901406068699004510CU31` got 941 × 201, 59 × 5xx. `pa_error` only stores the first 4,000 characters of the batch response, so the 5xx parts are only visible in the run history.
 
 ## Script 03 output
 
@@ -110,6 +132,37 @@ workflow() tags exposed by the platform: {
 │ 2       │ '2026-11-14T18:27:10Z' │ 'NoRespond'    │ 'Succeeded' │ 150983 │ 151358          │ 'Succeeded'   │ '08584069260549339911896690580CU24' │
 │ 3       │ '2026-11-14T18:24:58Z' │ 'RespondEarly' │ 'Succeeded' │ 60677  │ 61248           │ 'Succeeded'   │ '08584069261876531666149141405CU02' │
 │ 4       │ '2026-11-14T18:24:14Z' │ 'RespondLate'  │ 'Succeeded' │ 1862   │ 2378            │ 'Succeeded'   │ '08584069262310378138969222704CU12' │
+└─────────┴────────────────────────┴────────────────┴─────────────┴────────┴─────────────────┴───────────────┴─────────────────────────────────────┘
+
+ℹ️  Compare flowMs with flowrunDuration to confirm the unit of flowrun.duration (docs disagree: seconds vs ms).
+```
+
+Second run, `node poc/scripts/04-check-runs.mjs 20`, after the second app session. `status` = the flow's own `pa_benchmarkrun` row; `flowrunStatus` = platform:
+
+```text
+┌─────────┬────────────────────────┬────────────────┬─────────────┬────────┬─────────────────┬───────────────┬─────────────────────────────────────┐
+│ (index) │ created                │ variant        │ status      │ flowMs │ flowrunDuration │ flowrunStatus │ runId                               │
+├─────────┼────────────────────────┼────────────────┼─────────────┼────────┼─────────────────┼───────────────┼─────────────────────────────────────┤
+│ 0       │ '2026-11-14T18:54:06Z' │ 'SpBatch'      │ 'Partial'   │ 93877  │ '(not found)'   │ ''            │ '08584069244388952803805661278CU05' │
+│ 1       │ '2026-11-14T18:53:03Z' │ 'SpBatch'      │ 'Succeeded' │ 56632  │ 56949           │ 'Succeeded'   │ '08584069245025556166037268363CU13' │
+│ 2       │ '2026-11-14T18:52:36Z' │ 'SpBatch'      │ 'Succeeded' │ 9825   │ 10100           │ 'Succeeded'   │ '08584069245294190433141747002CU24' │
+│ 3       │ '2026-11-14T18:52:33Z' │ 'RespondLate'  │ 'Succeeded' │ 150458 │ '(not found)'   │ ''            │ '08584069245319368439059362230CU02' │
+│ 4       │ '2026-11-14T18:52:32Z' │ 'NoRespond'    │ 'Succeeded' │ 150235 │ '(not found)'   │ ''            │ '08584069245335927589037623775CU29' │
+│ 5       │ '2026-11-14T18:52:31Z' │ 'RespondEarly' │ 'Succeeded' │ 60849  │ 61117           │ 'Succeeded'   │ '08584069245344481776327621311CU20' │
+│ 6       │ '2026-11-14T18:52:30Z' │ 'RespondLate'  │ 'Succeeded' │ 1460   │ '(not found)'   │ ''            │ '08584069245352739383743956705CU31' │
+│ 7       │ '2026-11-14T18:51:35Z' │ 'SpBatch'      │ 'Partial'   │ 96498  │ 96818           │ 'Failed'      │ '08584069245901406068699004510CU31' │
+│ 8       │ '2026-11-14T18:51:32Z' │ 'RespondLate'  │ 'Succeeded' │ 1238   │ 4580            │ 'Succeeded'   │ '08584069245935228637616034665CU02' │
+│ 9       │ '2026-11-14T18:49:53Z' │ 'SpBatch'      │ 'Succeeded' │ 61253  │ 61552           │ 'Succeeded'   │ '08584069246924149662753557928CU04' │
+│ 10      │ '2026-11-14T18:49:38Z' │ 'NoRespond'    │ 'Succeeded' │ 150253 │ '(not found)'   │ ''            │ '08584069247067924379361118640CU10' │
+│ 11      │ '2026-11-14T18:49:38Z' │ 'RespondLate'  │ 'Succeeded' │ 150498 │ 150931          │ 'Failed'      │ '08584069247069561426864487478CU17' │
+│ 12      │ '2026-11-14T18:49:37Z' │ 'RespondEarly' │ 'Succeeded' │ 60458  │ 60817           │ 'Succeeded'   │ '08584069247082390103994655809CU20' │
+│ 13      │ '2026-11-14T18:49:36Z' │ 'RespondLate'  │ 'Succeeded' │ 1219   │ 1719            │ 'Succeeded'   │ '08584069247090372644552350978CU26' │
+│ 14      │ '2026-11-14T18:49:33Z' │ 'SpBatch'      │ 'Succeeded' │ 13647  │ 13880           │ 'Succeeded'   │ '08584069247121551634188087875CU05' │
+│ 15      │ '2026-11-14T18:48:38Z' │ 'SpBatch'      │ 'Succeeded' │ 11413  │ 11889           │ 'Succeeded'   │ '08584069247675234871400894509CU10' │
+│ 16      │ '2026-11-14T18:45:32Z' │ 'RespondLate'  │ 'Succeeded' │ 150284 │ 151060          │ 'Failed'      │ '08584069249528720793921157646CU28' │
+│ 17      │ '2026-11-14T18:42:47Z' │ 'NoRespond'    │ 'Succeeded' │ 150408 │ 150706          │ 'Succeeded'   │ '08584069251178251465952790015CU08' │
+│ 18      │ '2026-11-14T18:41:39Z' │ 'RespondEarly' │ 'Succeeded' │ 60766  │ 61089           │ 'Succeeded'   │ '08584069251865658327424668595CU05' │
+│ 19      │ '2026-11-14T18:38:23Z' │ 'RespondLate'  │ 'Succeeded' │ 1581   │ 2041            │ 'Succeeded'   │ '08584069253821045991061283629CU15' │
 └─────────┴────────────────────────┴────────────────┴─────────────┴────────┴─────────────────┴───────────────┴─────────────────────────────────────┘
 
 ℹ️  Compare flowMs with flowrunDuration to confirm the unit of flowrun.duration (docs disagree: seconds vs ms).
