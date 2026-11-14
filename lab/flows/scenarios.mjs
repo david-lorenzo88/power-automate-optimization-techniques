@@ -231,6 +231,7 @@ export function buildLabFlows(cfg, ids = {}, { runnable } = {}) {
         Verify: uc4Verify(after('Create_loop', ['Succeeded', 'Failed'])),
         Kpi: kpi({
           processed: "length(body('Verify')?['value'])", loops: VOL, calls: `add(${VOL}, 1)`, actions: `add(${BASE + 3}, ${VOL})`, checksum: uc4Check,
+          statusExpr: `if(less(length(body('Verify')?['value']), ${VOL}), 'Partial', 'Succeeded')`,
         }, after('Verify')),
       },
     }));
@@ -252,6 +253,7 @@ export function buildLabFlows(cfg, ids = {}, { runnable } = {}) {
       Verify: uc4Verify(after('Batch_loop', ['Succeeded', 'Failed'])),
       Kpi: kpi({
         processed: "length(body('Verify')?['value'])", loops: "length(outputs('Chunks'))", calls: "add(length(outputs('Chunks')), 1)",
+          statusExpr: `if(less(length(body('Verify')?['value']), ${VOL}), 'Partial', 'Succeeded')`,
         payload: '0', actions: `add(${BASE + 4}, mul(6, length(outputs('Chunks'))))`, checksum: uc4Check,
         extra: { created201: "variables('Created')" },
       }, after('Verify')),
@@ -280,6 +282,7 @@ export function buildLabFlows(cfg, ids = {}, { runnable } = {}) {
         Verify: verifyImport(after('Create_loop', ['Succeeded', 'Failed'])),
         Kpi: kpi({
           processed: verifyImportCount, loops: VOL, calls: `add(${VOL}, 1)`, actions: `add(${BASE + 3}, ${VOL})`, checksum: verifyImportChecksum,
+          statusExpr: `if(less(${verifyImportCount}, ${VOL}), 'Partial', 'Succeeded')`,
         }, after('Verify')),
       },
     }));
@@ -298,6 +301,7 @@ export function buildLabFlows(cfg, ids = {}, { runnable } = {}) {
       Verify: verifyImport(after('Bulk_loop', ['Succeeded', 'Failed'])),
       Kpi: kpi({
         processed: verifyImportCount, loops: "length(outputs('Chunks'))", calls: "add(length(outputs('Chunks')), 1)",
+          statusExpr: `if(less(${verifyImportCount}, ${VOL}), 'Partial', 'Succeeded')`,
         actions: `add(${BASE + 3}, mul(2, length(outputs('Chunks'))))`, checksum: verifyImportChecksum,
       }, after('Verify')),
     },

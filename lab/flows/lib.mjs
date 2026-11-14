@@ -214,7 +214,7 @@ export function footer(P) {
     Update_run_row: dvAction('UpdateRecord', {
       entityName: `${P}_benchmarkruns`,
       recordId: `@outputs('Create_run_row')?['body/${P}_benchmarkrunid']`,
-      [`item/${P}_status`]: `@{if(equals(actions('Work')?['status'], 'Succeeded'), coalesce(${k('status')}, 'Succeeded'), 'Failed')}`,
+      [`item/${P}_status`]: `@{coalesce(${k('status')}, if(equals(actions('Work')?['status'], 'Succeeded'), 'Succeeded', 'Failed'))}`,
       [`item/${P}_endtime`]: '@utcNow()',
       [`item/${P}_durationms`]: "@div(sub(ticks(utcNow()), ticks(outputs('Start'))), 10000)",
       [`item/${P}_recordsprocessed`]: `@${k('recordsProcessed')}`,
