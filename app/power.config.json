@@ -1,0 +1,75 @@
+{
+  "version": "1.0",
+  "appId": "fb0ed9e0-6b0e-43ab-8ff8-2a7c4687fdc6",
+  "appDisplayName": "Flow Optimization Lab",
+  "region": "prod",
+  "appType": "CodeApp",
+  "environmentId": "df93e55c-cf3b-e261-87e1-ddb2b052de1d",
+  "description": " ",
+  "buildPath": "./dist",
+  "buildEntryPoint": "index.html",
+  "localAppUrl": "http://localhost:3000",
+  "logoPath": "Default",
+  "connectionReferences": {
+    "8704310d-9118-4c1b-8af0-f0d8571ef38f": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "pocrespondearly"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "ea8d1bac-56e0-f111-84ea-0022480b19a1",
+        "workflowDisplayName": "PocRespondEarly",
+        "workflowName": "5981b82f-deee-c10e-1fe4-88c2fae0efda"
+      }
+    },
+    "09a60532-77be-49c4-a049-35652f95c6b2": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "pocrespondlate"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "162174b3-56e0-f111-84e8-7ced8d6f7afa",
+        "workflowDisplayName": "PocRespondLate",
+        "workflowName": "88346a50-54fa-4bba-ad73-2e885060481d"
+      }
+    },
+    "182a0019-a8fc-4bb0-acb7-d6bf66c25da2": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "pocnorespond"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "5efc92c0-56e0-f111-84ea-0022480b19a1",
+        "workflowDisplayName": "PocNoRespond",
+        "workflowName": "9479e24d-ed68-9cdd-3178-de191c816ce4"
+      }
+    },
+    "fb92ee73-952f-43c9-887a-28c7076aa18d": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "pocspbatch"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "cee71cc7-56e0-f111-84ea-0022480b19a1",
+        "workflowDisplayName": "PocSpBatch",
+        "workflowName": "7c753364-30d6-1edc-f62f-707e0ec09d00"
+      }
+    }
+  },
+  "databaseReferences": {
+    "default.cds": {
+      "dataSources": {
+        "benchmarkruns": {
+          "entitySetName": "pa_benchmarkruns",
+          "logicalName": "pa_benchmarkrun",
+          "isHidden": false
+        }
+      },
+      "environmentVariableName": ""
+    }
+  }
+}
