@@ -1,0 +1,722 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "pa_dataverse"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "pa_sharepoint"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      },
+      "shared_webcontents": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "pa_httpdataverse"
+        },
+        "api": {
+          "name": "shared_webcontents"
+        }
+      },
+      "shared_excelonlinebusiness": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "pa_excel"
+        },
+        "api": {
+          "name": "shared_excelonlinebusiness"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "PowerAppV2",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "title": "payload",
+                  "type": "string",
+                  "description": "JSON payload from the Code App",
+                  "x-ms-dynamically-added": true,
+                  "x-ms-content-hint": "TEXT"
+                }
+              },
+              "required": [
+                "text"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Start": {
+          "type": "Compose",
+          "inputs": "@utcNow()",
+          "runAfter": {}
+        },
+        "Payload": {
+          "type": "Compose",
+          "inputs": "@json(coalesce(triggerBody()?['text'], '{}'))",
+          "runAfter": {
+            "Start": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Volume": {
+          "type": "Compose",
+          "inputs": "@min(max(int(coalesce(outputs('Payload')?['volume'], 1)), 1), 1)",
+          "runAfter": {
+            "Payload": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Links": {
+          "type": "Compose",
+          "inputs": {
+            "environmentId": "@{workflow()?['tags']?['environmentName']}",
+            "flowId": "@{workflow()?['name']}",
+            "runId": "@{workflow()?['run']?['name']}",
+            "runUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}",
+            "detailsUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/details')}"
+          },
+          "runAfter": {
+            "Volume": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Create_run_row": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "CreateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "pa_benchmarkruns",
+              "item/pa_name": "@{coalesce(outputs('Payload')?['correlationId'], guid())}",
+              "item/pa_scenario": "ADMIN",
+              "item/pa_variant": "RESET",
+              "item/pa_technique": "Reset demo targets (payload.target = uc4 | uc5 | uc7 | uc9 | all)",
+              "item/pa_status": "Running",
+              "item/pa_label": "@{outputs('Payload')?['label']}",
+              "item/pa_volume": "@outputs('Volume')",
+              "item/pa_starttime": "@outputs('Start')",
+              "item/pa_runid": "@outputs('Links')?['runId']",
+              "item/pa_flowid": "@outputs('Links')?['flowId']",
+              "item/pa_environmentid": "@outputs('Links')?['environmentId']",
+              "item/pa_runurl": "@outputs('Links')?['runUrl']",
+              "item/pa_editurl": "@outputs('Links')?['detailsUrl']"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Links": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Respond_to_app": {
+          "type": "Response",
+          "kind": "PowerApp",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "runid": "@{outputs('Links')?['runId']}",
+              "runurl": "@{outputs('Links')?['runUrl']}",
+              "rowid": "@{outputs('Create_run_row')?['body/pa_benchmarkrunid']}"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "runid": {
+                  "title": "runId",
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "runurl": {
+                  "title": "runUrl",
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "rowid": {
+                  "title": "rowId",
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Create_run_row": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Work": {
+          "type": "Scope",
+          "actions": {
+            "CRLF": {
+              "type": "Compose",
+              "inputs": "@decodeUriComponent('%0D%0A')",
+              "runAfter": {}
+            },
+            "Reset_uc4": {
+              "type": "If",
+              "expression": {
+                "or": [
+                  {
+                    "equals": [
+                      "@coalesce(outputs('Payload')?['target'], 'all')",
+                      "all"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@coalesce(outputs('Payload')?['target'], 'all')",
+                      "uc4"
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Delete_until_empty": {
+                  "type": "Until",
+                  "expression": "@equals(length(body('Get_ids')?['value']), 0)",
+                  "limit": {
+                    "count": 60,
+                    "timeout": "PT1H"
+                  },
+                  "actions": {
+                    "Get_ids": {
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "HttpRequest",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                        },
+                        "parameters": {
+                          "dataset": "https://davidlorenzolopez.sharepoint.com",
+                          "parameters/method": "GET",
+                          "parameters/uri": "_api/web/lists(guid'0041f59a-c611-456b-8abb-b07c3cadee54')/items?$select=Id&$top=300",
+                          "parameters/headers": {
+                            "Accept": "application/json;odata=nometadata"
+                          }
+                        },
+                        "authentication": "@parameters('$authentication')"
+                      },
+                      "runAfter": {}
+                    },
+                    "Has_ids": {
+                      "type": "If",
+                      "expression": {
+                        "and": [
+                          {
+                            "greater": [
+                              "@length(body('Get_ids')?['value'])",
+                              0
+                            ]
+                          }
+                        ]
+                      },
+                      "actions": {
+                        "D_ids": {
+                          "type": "Compose",
+                          "inputs": {
+                            "batch": "@{guid()}",
+                            "cs": "@{guid()}"
+                          },
+                          "runAfter": {}
+                        },
+                        "D_parts": {
+                          "type": "Select",
+                          "inputs": {
+                            "from": "@body('Get_ids')?['value']",
+                            "select": "@concat('--changeset_', outputs('D_ids')?['cs'], outputs('CRLF'), 'Content-Type: application/http', outputs('CRLF'), 'Content-Transfer-Encoding: binary', outputs('CRLF'), outputs('CRLF'), 'DELETE https://davidlorenzolopez.sharepoint.com/_api/web/lists(guid''0041f59a-c611-456b-8abb-b07c3cadee54'')/items(', string(item()?['Id']), ') HTTP/1.1', outputs('CRLF'), 'IF-MATCH: *', outputs('CRLF'), outputs('CRLF'))"
+                          },
+                          "runAfter": {
+                            "D_ids": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "D_body": {
+                          "type": "Compose",
+                          "inputs": "@concat('--batch_', outputs('D_ids')?['batch'], outputs('CRLF'), 'Content-Type: multipart/mixed; boundary=\"changeset_', outputs('D_ids')?['cs'], '\"', outputs('CRLF'), 'Content-Transfer-Encoding: binary', outputs('CRLF'), outputs('CRLF'), join(body('D_parts'), ''), '--changeset_', outputs('D_ids')?['cs'], '--', outputs('CRLF'), outputs('CRLF'), '--batch_', outputs('D_ids')?['batch'], '--', outputs('CRLF'))",
+                          "runAfter": {
+                            "D_parts": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "D_send": {
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "HttpRequest",
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                            },
+                            "parameters": {
+                              "dataset": "https://davidlorenzolopez.sharepoint.com",
+                              "parameters/method": "POST",
+                              "parameters/uri": "_api/$batch",
+                              "parameters/headers": {
+                                "Content-Type": "multipart/mixed; boundary=\"batch_@{outputs('D_ids')?['batch']}\"",
+                                "Accept": "application/json;odata=verbose"
+                              },
+                              "parameters/body": "@outputs('D_body')"
+                            },
+                            "authentication": "@parameters('$authentication')"
+                          },
+                          "runAfter": {
+                            "D_body": [
+                              "Succeeded"
+                            ]
+                          }
+                        },
+                        "D_text": {
+                          "type": "Compose",
+                          "inputs": "@if(startsWith(string(body('D_send')), '{\"$content'), base64ToString(json(string(body('D_send')))?['$content']), string(body('D_send')))",
+                          "runAfter": {
+                            "D_send": [
+                              "Succeeded",
+                              "Failed"
+                            ]
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      },
+                      "runAfter": {
+                        "Get_ids": [
+                          "Succeeded"
+                        ]
+                      }
+                    }
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "CRLF": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Reset_uc5": {
+              "type": "If",
+              "expression": {
+                "or": [
+                  {
+                    "equals": [
+                      "@coalesce(outputs('Payload')?['target'], 'all')",
+                      "all"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@coalesce(outputs('Payload')?['target'], 'all')",
+                      "uc5"
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Bulk_delete": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_webcontents",
+                      "operationId": "InvokeHttp",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_webcontents"
+                    },
+                    "parameters": {
+                      "request/method": "POST",
+                      "request/url": "https://premium-us.crm.dynamics.com/api/data/v9.2/BulkDelete",
+                      "request/headers": {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Accept": "application/json",
+                        "OData-Version": "4.0",
+                        "OData-MaxVersion": "4.0"
+                      },
+                      "request/body": "@{concat('{\"QuerySet\":[{\"EntityName\":\"pa_orderimport\",\"ColumnSet\":{\"AllColumns\":false,\"Columns\":[]},\"Criteria\":{\"FilterOperator\":\"And\",\"Conditions\":[],\"Filters\":[]}}],\"JobName\":\"FlowOptLab reset pa_orderimport\",\"SendEmailNotification\":false,\"ToRecipients\":[],\"CCRecipients\":[],\"RecurrencePattern\":\"\",\"StartDateTime\":\"', utcNow(), '\",\"RunNow\":true}')}"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {}
+            },
+            "Reset_uc7": {
+              "type": "If",
+              "expression": {
+                "or": [
+                  {
+                    "equals": [
+                      "@coalesce(outputs('Payload')?['target'], 'all')",
+                      "all"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@coalesce(outputs('Payload')?['target'], 'all')",
+                      "uc7"
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Get_uc7": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "HttpRequest",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                    },
+                    "parameters": {
+                      "dataset": "https://davidlorenzolopez.sharepoint.com",
+                      "parameters/method": "GET",
+                      "parameters/uri": "_api/web/lists(guid'eeefe354-6a06-4eea-b8b2-bf543157e85c')/items?$select=Id&$top=100",
+                      "parameters/headers": {
+                        "Accept": "application/json;odata=nometadata"
+                      }
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  },
+                  "runAfter": {}
+                },
+                "R_ids": {
+                  "type": "Compose",
+                  "inputs": {
+                    "batch": "@{guid()}",
+                    "cs": "@{guid()}"
+                  },
+                  "runAfter": {
+                    "Get_uc7": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "R_parts": {
+                  "type": "Select",
+                  "inputs": {
+                    "from": "@body('Get_uc7')?['value']",
+                    "select": "@concat('--changeset_', outputs('R_ids')?['cs'], outputs('CRLF'), 'Content-Type: application/http', outputs('CRLF'), 'Content-Transfer-Encoding: binary', outputs('CRLF'), outputs('CRLF'), 'PATCH https://davidlorenzolopez.sharepoint.com/_api/web/lists(guid''eeefe354-6a06-4eea-b8b2-bf543157e85c'')/items(', string(item()?['Id']), ') HTTP/1.1', outputs('CRLF'), 'Content-Type: application/json;odata=verbose', outputs('CRLF'), 'IF-MATCH: *', outputs('CRLF'), outputs('CRLF'), '{\"__metadata\":{\"type\":\"SP.Data.UC7ItemsListItem\"},\"Status\":\"Pending\",\"Notes\":\"\",\"CorrelationId\":\"\"}', outputs('CRLF'), outputs('CRLF'))"
+                  },
+                  "runAfter": {
+                    "R_ids": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "R_body": {
+                  "type": "Compose",
+                  "inputs": "@concat('--batch_', outputs('R_ids')?['batch'], outputs('CRLF'), 'Content-Type: multipart/mixed; boundary=\"changeset_', outputs('R_ids')?['cs'], '\"', outputs('CRLF'), 'Content-Transfer-Encoding: binary', outputs('CRLF'), outputs('CRLF'), join(body('R_parts'), ''), '--changeset_', outputs('R_ids')?['cs'], '--', outputs('CRLF'), outputs('CRLF'), '--batch_', outputs('R_ids')?['batch'], '--', outputs('CRLF'))",
+                  "runAfter": {
+                    "R_parts": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "R_send": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "HttpRequest",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                    },
+                    "parameters": {
+                      "dataset": "https://davidlorenzolopez.sharepoint.com",
+                      "parameters/method": "POST",
+                      "parameters/uri": "_api/$batch",
+                      "parameters/headers": {
+                        "Content-Type": "multipart/mixed; boundary=\"batch_@{outputs('R_ids')?['batch']}\"",
+                        "Accept": "application/json;odata=verbose"
+                      },
+                      "parameters/body": "@outputs('R_body')"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  },
+                  "runAfter": {
+                    "R_body": [
+                      "Succeeded"
+                    ]
+                  }
+                },
+                "R_text": {
+                  "type": "Compose",
+                  "inputs": "@if(startsWith(string(body('R_send')), '{\"$content'), base64ToString(json(string(body('R_send')))?['$content']), string(body('R_send')))",
+                  "runAfter": {
+                    "R_send": [
+                      "Succeeded",
+                      "Failed"
+                    ]
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {
+                "CRLF": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Reset_uc9": {
+              "type": "If",
+              "expression": {
+                "or": [
+                  {
+                    "equals": [
+                      "@coalesce(outputs('Payload')?['target'], 'all')",
+                      "all"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@coalesce(outputs('Payload')?['target'], 'all')",
+                      "uc9"
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Reset_slow": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_excelonlinebusiness",
+                      "operationId": "RunScriptProdV2",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_excelonlinebusiness"
+                    },
+                    "parameters": {
+                      "source": "https://davidlorenzolopez.sharepoint.com",
+                      "drive": "b!Ds3e92wKiUW7PnNf13j9PLhWSpi1oltLupRPY51fT7pTBqXN0o9aTqXtgwg84a1p",
+                      "file": "01GFZXS5ZU3KQZSULQIFF2SWVJOPS3CM5H",
+                      "scriptSource": "https://davidlorenzolopez.sharepoint.com",
+                      "scriptDrive": "b!Ds3e92wKiUW7PnNf13j9PLhWSpi1oltLupRPY51fT7pTBqXN0o9aTqXtgwg84a1p",
+                      "scriptId": "01GFZXS5Y5IPOFORGEQVBLG2GZ7JUNLMIX"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  },
+                  "runAfter": {}
+                },
+                "Reset_fast": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_excelonlinebusiness",
+                      "operationId": "RunScriptProdV2",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_excelonlinebusiness"
+                    },
+                    "parameters": {
+                      "source": "https://davidlorenzolopez.sharepoint.com",
+                      "drive": "b!Ds3e92wKiUW7PnNf13j9PLhWSpi1oltLupRPY51fT7pTBqXN0o9aTqXtgwg84a1p",
+                      "file": "01GFZXS5ZP3ADPASGLMVBJUJYLQCUNFCTU",
+                      "scriptSource": "https://davidlorenzolopez.sharepoint.com",
+                      "scriptDrive": "b!Ds3e92wKiUW7PnNf13j9PLhWSpi1oltLupRPY51fT7pTBqXN0o9aTqXtgwg84a1p",
+                      "scriptId": "01GFZXS5Y5IPOFORGEQVBLG2GZ7JUNLMIX"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  },
+                  "runAfter": {}
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "runAfter": {}
+            },
+            "Remaining_uc4": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "HttpRequest",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "https://davidlorenzolopez.sharepoint.com",
+                  "parameters/method": "GET",
+                  "parameters/uri": "_api/web/lists(guid'0041f59a-c611-456b-8abb-b07c3cadee54')?$select=ItemCount",
+                  "parameters/headers": {
+                    "Accept": "application/json;odata=nometadata"
+                  }
+                },
+                "authentication": "@parameters('$authentication')"
+              },
+              "runAfter": {
+                "Reset_uc4": [
+                  "Succeeded",
+                  "Failed",
+                  "Skipped",
+                  "TimedOut"
+                ],
+                "Reset_uc5": [
+                  "Succeeded",
+                  "Failed",
+                  "Skipped",
+                  "TimedOut"
+                ],
+                "Reset_uc7": [
+                  "Succeeded",
+                  "Failed",
+                  "Skipped",
+                  "TimedOut"
+                ],
+                "Reset_uc9": [
+                  "Succeeded",
+                  "Failed",
+                  "Skipped",
+                  "TimedOut"
+                ]
+              }
+            },
+            "Kpi": {
+              "type": "Compose",
+              "inputs": {
+                "recordsProcessed": "@0",
+                "recordsRetrieved": "@0",
+                "loopIterations": "@0",
+                "connectorCalls": "@0",
+                "actionsEstimated": "@24",
+                "payloadBytes": "@0",
+                "checksum": "@{concat('target=', coalesce(outputs('Payload')?['target'], 'all'), '|OrderImport=', string(body('Remaining_uc4')?['ItemCount']), '|uc5=', if(equals(actions('Reset_uc5')?['status'], 'Succeeded'), 'BulkDelete job submitted', 'skipped'))}"
+              },
+              "runAfter": {
+                "Remaining_uc4": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Respond_to_app": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Work_errors": {
+          "type": "Query",
+          "inputs": {
+            "from": "@result('Work')",
+            "where": "@equals(item()?['status'], 'Failed')"
+          },
+          "runAfter": {
+            "Work": [
+              "Succeeded",
+              "Failed",
+              "Skipped",
+              "TimedOut"
+            ]
+          }
+        },
+        "Update_run_row": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "pa_benchmarkruns",
+              "recordId": "@outputs('Create_run_row')?['body/pa_benchmarkrunid']",
+              "item/pa_status": "@{if(equals(actions('Work')?['status'], 'Succeeded'), coalesce(outputs('Kpi')?['status'], 'Succeeded'), 'Failed')}",
+              "item/pa_endtime": "@utcNow()",
+              "item/pa_durationms": "@div(sub(ticks(utcNow()), ticks(outputs('Start'))), 10000)",
+              "item/pa_recordsprocessed": "@outputs('Kpi')?['recordsProcessed']",
+              "item/pa_recordsretrieved": "@outputs('Kpi')?['recordsRetrieved']",
+              "item/pa_loopiterations": "@outputs('Kpi')?['loopIterations']",
+              "item/pa_connectorcalls": "@outputs('Kpi')?['connectorCalls']",
+              "item/pa_actionsestimated": "@outputs('Kpi')?['actionsEstimated']",
+              "item/pa_payloadbytes": "@outputs('Kpi')?['payloadBytes']",
+              "item/pa_resultchecksum": "@{outputs('Kpi')?['checksum']}",
+              "item/pa_details": "@{string(json(concat('{\"kpi\":', string(coalesce(outputs('Kpi'), json('{}'))), ',\"payload\":', string(outputs('Payload')), ',\"links\":', string(outputs('Links')), '}')))}",
+              "item/pa_error": "@{if(empty(body('Work_errors')), '', substring(string(body('Work_errors')), 0, min(length(string(body('Work_errors'))), 4000)))}"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Work_errors": [
+              "Succeeded",
+              "Failed",
+              "Skipped",
+              "TimedOut"
+            ]
+          }
+        },
+        "Update_run_row_fallback": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "pa_benchmarkruns",
+              "recordId": "@outputs('Create_run_row')?['body/pa_benchmarkrunid']",
+              "item/pa_status": "Failed",
+              "item/pa_endtime": "@utcNow()",
+              "item/pa_durationms": "@div(sub(ticks(utcNow()), ticks(outputs('Start'))), 10000)",
+              "item/pa_error": "@{if(empty(body('Work_errors')), 'Work failed', substring(string(body('Work_errors')), 0, min(length(string(body('Work_errors'))), 4000)))}"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Update_run_row": [
+              "Failed",
+              "Skipped",
+              "TimedOut"
+            ]
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

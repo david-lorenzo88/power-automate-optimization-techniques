@@ -13,6 +13,10 @@
   --bad: #b3261e;
   --bad-soft: #f9dedc;
   --info-soft: #fff1cc;
+  --ok: #1e7b3c;
+  --slow: #c4314b;
+  --mid: #c9821a;
+  --fast: #1e8a4c;
   color: var(--fg);
   background: var(--bg);
 }
@@ -30,6 +34,10 @@
     --bad: #f2b8b5;
     --bad-soft: #4a2220;
     --info-soft: #4a3d14;
+    --ok: #7fd49a;
+    --slow: #e06c7f;
+    --mid: #e0a64b;
+    --fast: #4cc27c;
   }
 }
 body { margin: 0; background: var(--bg); }
