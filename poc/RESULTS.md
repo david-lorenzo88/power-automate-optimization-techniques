@@ -2,6 +2,8 @@
 
 Fill in after running the kit (see poc/README.md). ✅ / ❌ / ⚠️ + notes.
 
+**Summary:** #1 ✅ · #2 ✅ · #3 ✅ · #4 ✅ · #5 ⚠️ (respond early or not at all past 120 s) · #6 ⚠️ (use `/flows/…/runs` + `/details`; solution path and `/edit` broken) · #7 ⚠️ (API ✅ 18× faster; not available in *Perform a bound action*) · #8 ⚠️ (≤ 500 items per batch; ~90 s server limit; changesets **not** atomic) · #9 ✅ (`flowrun.duration` in ms)
+
 Run on 2026-11-14 against **PREMIUM-US** (`df93e55c-cf3b-e261-87e1-ddb2b052de1d`, https://premium-us.crm.dynamics.com, Sandbox), as david@powerplatformninja.com.
 Scripts and `pa` ran from a Linux cloud container (Node 22.23, Azure CLI 2.92.0, `pa` 1.4.1), signed in with device code.
 
@@ -14,7 +16,7 @@ Scripts and `pa` ran from a Linux cloud container (Node 22.23, Azure CLI 2.92.0,
 | 5 | > 120 s: no-respond (T5a) / respond-late (T5b) | ⚠️ | Run() behaviour: **T5a (no Respond)**: `Run()` resolves in **0.5–0.7 s** (async/202) and the flow succeeds in ~150 s, so it's fire-and-forget and the result has to come from `pa_benchmarkrun` polling. **T5b (Respond at end, 150 s)**: `Run()` **rejects at 120 s**. The first session got a generic `{"code":"UnexpectedError"}`; the second got `{"error":{"code":"TimedOut","message":"Invocation of API timed out."}}`. The error shape isn't stable, so the app shouldn't rely on it. The flow's own work completes (`pa_benchmarkrun` = Succeeded, 150.5 s), but **`flowrun.status` = Failed**, because the Respond action fails once nobody is waiting. **Design rule:** any flow that can exceed ~120 s must respond early (or not at all) and report through Dataverse. A late Respond also turns the run red in run history. |
 | 6 | Links: flows path / solutions path / edit / details, anchor vs window.open, local vs published | ⚠️ | Published app: **works**: run via `/flows/{id}/runs/{runId}`, `/flows/{id}/details`, run URL built in-app from `getContext()`. **Broken**: run via `/solutions/~preferred/flows/{id}/runs/{runId}`, and `/flows/{id}/edit`. → Use the plain `/flows/` path for run and details links, and drop the solution-path and `/edit` links. The export has one verdict per link, not one per method (anchor vs window.open). Local Play not tested: it serves from `localhost:3000`, which a cloud container can't expose to the user's browser. |
 | 7 | CreateMultiple in "Perform a bound action" picker; script 03 timings | ⚠️ API ✅ / picker ❌ | **API**: CreateMultiple 1000 rows in **10.1 s** in 1 request, vs ~182 s extrapolated for sequential single POSTs (~18×). UpdateMultiple 10.7 ms/row, UpsertMultiple (alt key) 34.6 ms/row. **Picker: not available.** In `$metadata`, `CreateMultiple` / `UpdateMultiple` / `UpsertMultiple` / `DeleteMultiple` are bound to `Collection(mscrm.crmbaseentity)` (the entity **set**). Nothing is bound to `pa_orderimport` itself. The connector's *Perform a bound action* (`PerformBoundAction`) always calls `{entitySet}({recordId})/{actionName}`, a **single record**, so collection-bound actions can't appear in or be called through it. The only other raw operation in the connector is *Perform a changeset request* (`ExecuteChangeset`, `$batch`). → For the demo flows, call CreateMultiple/UpsertMultiple with an HTTP action authenticated to Dataverse, e.g. *HTTP with Microsoft Entra ID (preauthorized)*; this hasn't been tested yet. |
-| 8 | SharePoint `$batch` limit (100/500/1000/2000) + changeset atomicity | ⚠️ | List **PocImport** (Number `Amount`) on https://davidlorenzolopez.sharepoint.com. **100**: 100/100 ×4 runs (9.2–14.1 s). **500**: 500/500 ×2 (55.8 / 60.5 s). **1000**: **partial** ×2: 941/1000 (95.6 s) and 873/1000 (93.0 s). The outer `$batch` returns HTTP 200; SharePoint processes the parts **in order**, and every part after ~90 s of server time returns `500 Microsoft.SharePoint.Client.ClientServiceTimeoutException: The operation has timed out.` The limit is **time (~90 s per `$batch`)**, not a fixed item count, at ~95–110 ms/item. → **Use ≤ 500 items per `$batch`**, and count 5xx parts as well as 4xx (the export only shows 4xx). 2000 not run (1000 already times out). Changeset atomicity (100 + 1 invalid): ⏳ pending. |
+| 8 | SharePoint `$batch` limit (100/500/1000/2000) + changeset atomicity | ⚠️ | List **PocImport** (Number `Amount`) on https://davidlorenzolopez.sharepoint.com. **100**: 100/100 ×4 runs (9.2–14.1 s). **500**: 500/500 ×2 (55.8 / 60.5 s). **1000**: **partial** ×2: 941/1000 (95.6 s) and 873/1000 (93.0 s). The outer `$batch` returns HTTP 200; SharePoint processes the parts **in order**, and every part after ~90 s of server time returns `500 Microsoft.SharePoint.Client.ClientServiceTimeoutException: The operation has timed out.` The limit is **time (~90 s per `$batch`)**, not a fixed item count, at ~95–110 ms/item. → **Use ≤ 500 items per `$batch`**, and count 5xx parts as well as 4xx (the export only shows 4xx). 2000 not run (1000 already times out). **Changeset atomicity: ❌ not atomic.** 100 items in one `changeset_` with item #1 invalid → HTTP 200, **99 × 201 + 1 × `400 InvalidClientQueryException` (*Cannot convert a primitive value to the expected type 'Edm.Double'*)**. The bad part was the **first** in the changeset and the remaining 99 were still committed, so SharePoint REST `$batch` has no rollback (unlike Dataverse, script 03). → Demo flows must treat a SharePoint batch as *best effort*: parse every part's status (2xx / 4xx / 5xx) and retry or report the failed ones. |
 | 9 | flowrun cross-check + duration unit | ✅ | **`flowrun.duration` is in milliseconds** (T4: flow 60677 vs flowrun 61248; T5a: 150983 vs 151358; T3: 1862 vs 2378). flowrun is ~0.4–0.6 s longer, because it includes the trigger. New runs appear in `flowrun` only after a delay of a few minutes (some still missing 5+ min later). `flowrun.status` reflects the **whole run**: the T5b runs are *Failed* there while the flow's own telemetry says Succeeded (see #5), and T8-1000 *Partial* runs are *Failed*. `workflow()` tags include `xrmWorkflowId`, `logicAppName` (flow id), `environmentName`, `billingContext`, `licenseContextConfigName` (Premium). |
 
 ### Issues hit during setup
@@ -58,7 +60,7 @@ Environment: df93e55c-cf3b-e261-87e1-ddb2b052de1d · App URL: https://apps.power
 - flow: PocRespondLateService (../generated/services/PocRespondLateService.ts)
 - flow: PocSpBatchService (../generated/services/PocSpBatchService.ts)
 
-### PoC results (2026-11-14T18:55:54.516Z), second session
+### PoC results (2026-11-14T18:55:54.516Z → 19:05:01.744Z), second session (final export adds T8-100-bad; links re-checked with the same verdicts)
 
 | Test | Checklist | Verdict | Notes | Correlation |
 |---|---|---|---|---|
@@ -69,6 +71,7 @@ Environment: df93e55c-cf3b-e261-87e1-ddb2b052de1d · App URL: https://apps.power
 | T8-100 SharePoint $batch (100 items) | #8 | pass | HTTP 200, created 100/100, 4xx 0, batch call 9173 ms, payload 38855 bytes | c187ad84-97f6-460d-8f5a-002d1eebdb4d |
 | T8-500 SharePoint $batch (500 items) | #8 | pass | HTTP 200, created 500/500, 4xx 0, batch call 55804 ms, payload 194055 bytes | 2bb246ae-71a9-4deb-a6c1-edfd4e6b9a1a |
 | T8-1000 SharePoint $batch (1000 items) | #8 | info | HTTP 200, created 873/1000, 4xx 0, batch call 92997 ms, payload 388055 bytes | f08e88f8-d33e-4dce-a38a-cee3e1c3a923 |
+| T8-100-bad SharePoint $batch (100 items, 1 invalid) | #8 | info | HTTP 200, created 99/100, 4xx 1, batch call 9529 ms, payload 38868 bytes | 2d49df1e-6d3f-4b5d-ad61-23baebe476a5 |
 
 #### Links (#6)
 
@@ -79,6 +82,8 @@ Environment: df93e55c-cf3b-e261-87e1-ddb2b052de1d · App URL: https://apps.power
 - Run (built in app from getContext): ok · `https://make.powerautomate.com/environments/df93e55c-cf3b-e261-87e1-ddb2b052de1d/flows/7c753364-30d6-1edc-f62f-707e0ec09d00/runs/08584069244388952803805661278CU05`
 
 T8-1000 detail (from the `pa_benchmarkrun` row and the run's `Response_text` output): run `08584069244388952803805661278CU05` got 873 × `201 Created`, then parts 874–1000 × `500 Internal Server Error`, `{"error":{"code":"-2146233083, Microsoft.SharePoint.Client.ClientServiceTimeoutException","message":{"lang":"en-US","value":"The operation has timed out."}}}`. The earlier 1000 run `08584069245901406068699004510CU31` got 941 × 201, 59 × 5xx. `pa_error` only stores the first 4,000 characters of the batch response, so the 5xx parts are only visible in the run history.
+
+T8-100-bad detail: run `08584069239050508413196862487CU30` (`pa_status` = Partial): part 1 → `400 Bad Request`, `{"error":{"code":"-1, Microsoft.SharePoint.Client.InvalidClientQueryException","message":{"lang":"en-US","value":"Cannot convert a primitive value to the expected type 'Edm.Double'. ..."}}}`; parts 2–100 → `201 Created`.
 
 ## Script 03 output
 
