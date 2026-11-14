@@ -8,12 +8,14 @@
 |---|---|---|---|
 | C1 | Code apps can call **only solution-aware instant flows that use the Power Apps trigger** ("When Power Apps calls a flow (V2)"). Scheduled, automated and other instant triggers are not supported. | Flows triggered by SharePoint or Dataverse (UC7, trigger conditions) can't be launched directly. | All benchmark flows use the Power Apps V2 trigger. For UC7 the app launches a **driver** flow that modifies 100 items, and the two automated flows (with and without a trigger condition) log their own runs. |
 | C2 | Synchronous request limit is **120 s**. | SLOW variants run for minutes, so the app can't sit waiting on the call. | **Async pattern**: the app passes a `correlationId`, the flow writes a "Running" telemetry row immediately, does the work, then updates the row. The app polls Dataverse. We don't depend on the flow's response at all. Optionally respond early with the run ID. |
-| C3 | Flows are added one by one: `pa app add flow --flow-id <id>` generates a typed `<Flow>Service.ts`. You must re-run it when the flow definition changes. | ~20–25 generated services | Every flow has the **same trigger contract** (inputs/outputs), so the generated code is uniform and a small TS registry maps `scenario + variant → Service.Run`. |
+| C3 | Flows are added one by one: `pa app add flow --flow-id <id>` generates a typed `<Flow>Service.ts`. You must re-run it when the flow definition changes. | ~20–25 generated services | Every flow has the **same single-input trigger** (`payload` JSON string), so the generated code is uniform. The app discovers the generated services by name at build time (`import.meta.glob`), so there's no hand-maintained registry. |
 
 Other requirements:
 - Environment with Dataverse, and **"Enable code apps"** turned on (PPAC → Environments → Settings → Product → Features).
 - End users (us) need **Power Apps Premium** or pay-as-you-go. They also need Dataverse permissions to invoke flows (**App Opener** role or equivalent).
-- Tooling: Node LTS, `npm i -g @microsoft/power-apps-cli` (the `pa` command), client library `@microsoft/power-apps` **≥ 1.1.1**. The flow commands exist only in the npm-based `pa` CLI, not in `pac`. The npm CLI was reported as preview in spring 2026, so check its status when we build.
+- Tooling: Node LTS, `npm i -g @microsoft/power-apps-cli` (the `pa` command, **v1.4.1** published Nov 2026), client library `@microsoft/power-apps` (**1.6.0**; flows need ≥ 1.1.1). The flow commands exist only in the npm-based `pa` CLI, not in `pac`.
+- The CLI source confirms that only `PowerApp` / `PowerAppV2` trigger kinds are accepted. It also shows that the flow id `pa` uses is the Dataverse `workflow.resourceid`, which is the GUID in make.powerautomate.com URLs, **not** `workflowid`.
+- `getContext()` from `@microsoft/power-apps/app` returns `app.environmentId`, `app.dataverseOrgUrl`, `app.appUrl` and the user (UPN, Entra object id, systemuser id). The app can build maker links itself.
 - Code apps have **no Power Platform Git integration**. This repo is the source of truth for the app code; the flows go in a solution (export unpacked into the repo as well).
 
 ---
@@ -61,13 +63,16 @@ flowchart LR
 
 ## Uniform flow contract
 
-**Trigger inputs (Power Apps V2)**
+**Trigger input (Power Apps V2): a single text input `payload`** holding a JSON string, e.g. `{"correlationId":"…","volume":5000,"label":"live"}`. The flow reads it with `json(triggerBody()?['text'])`.
 
-| Name | Type | Purpose |
+Why only one input: the service that `pa app add flow` generates is typed from the trigger schema. With a single text input, the schema **never changes** when we add parameters or rework a flow, so the generated code never goes stale (constraint C3).
+
+| Payload field | Type | Purpose |
 |---|---|---|
-| `correlationId` | Text | Key the app polls on |
-| `volume` | Number | Records to process (lets us run SLOW small live, big beforehand) |
-| `label` | Text | Free text, e.g. "Dubai live demo" |
+| `correlationId` | string | Key the app polls on |
+| `volume` | number | Records to process (lets us run SLOW small live, big beforehand) |
+| `label` | string | Free text, e.g. "Dubai live demo" |
+| scenario-specific | any | e.g. `siteUrl`, `listName`, `batchSize`, `injectBadItem` |
 
 **Response (optional, if respond-early proves reliable)**: `runId`, `runUrl`, `editUrl`.
 
@@ -134,7 +139,7 @@ import { UC4_FASTService } from './generated/services/UC4_FASTService';
 import { Pa_benchmarkrunsService } from './generated/services/Pa_benchmarkrunsService';
 
 const correlationId = crypto.randomUUID();
-void UC4_FASTService.Run({ correlationId, volume: 1000, label: 'live' }); // don't await: async pattern
+void UC4_FASTService.Run({ text: JSON.stringify({ correlationId, volume: 1000, label: 'live' }) }); // don't await: async pattern
 
 const poll = setInterval(async () => {
   const r = await Pa_benchmarkrunsService.getAll({
@@ -159,6 +164,8 @@ npm run build && pa app push
 ---
 
 ## PoC checklist (do this before building all 20+ flows)
+
+The runnable kit for this checklist is in [`poc/`](../poc/README.md): scripts, the 4 PoC flow definitions, and the PoC page in `app/`.
 
 1. [ ] Turn on code apps in the demo environment and confirm the presenter account has Premium.
 2. [ ] Create a solution, the `pa_benchmarkrun` table, and one trivial flow (Power Apps V2 trigger + add row + update row).

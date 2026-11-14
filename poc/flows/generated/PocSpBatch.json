@@ -1,0 +1,317 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "pa_dataverse"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "pa_sharepoint"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "PowerAppV2",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "title": "payload",
+                  "type": "string",
+                  "description": "JSON payload from the Code App",
+                  "x-ms-dynamically-added": true,
+                  "x-ms-content-hint": "TEXT"
+                }
+              },
+              "required": [
+                "text"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Start": {
+          "type": "Compose",
+          "inputs": "@utcNow()",
+          "runAfter": {}
+        },
+        "Payload": {
+          "type": "Compose",
+          "inputs": "@json(coalesce(triggerBody()?['text'], '{}'))",
+          "runAfter": {
+            "Start": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Links": {
+          "type": "Compose",
+          "inputs": {
+            "environmentId": "@{workflow()?['tags']?['environmentName']}",
+            "flowId": "@{workflow()?['name']}",
+            "runId": "@{workflow()?['run']?['name']}",
+            "runUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}",
+            "runUrlSolution": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/solutions/~preferred/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}",
+            "editUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/edit')}",
+            "detailsUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/details')}"
+          },
+          "runAfter": {
+            "Payload": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Create_run_row": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "CreateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "pa_benchmarkruns",
+              "item/pa_name": "@outputs('Payload')?['correlationId']",
+              "item/pa_scenario": "POC",
+              "item/pa_variant": "SpBatch",
+              "item/pa_technique": "SharePoint $batch (one changeset)",
+              "item/pa_status": "Running",
+              "item/pa_label": "@{outputs('Payload')?['label']}",
+              "item/pa_volume": "@int(coalesce(outputs('Payload')?['batchSize'], 100))",
+              "item/pa_starttime": "@outputs('Start')",
+              "item/pa_runid": "@outputs('Links')?['runId']",
+              "item/pa_flowid": "@outputs('Links')?['flowId']",
+              "item/pa_environmentid": "@outputs('Links')?['environmentId']",
+              "item/pa_runurl": "@outputs('Links')?['runUrl']",
+              "item/pa_runurlsolution": "@outputs('Links')?['runUrlSolution']",
+              "item/pa_editurl": "@outputs('Links')?['editUrl']",
+              "item/pa_details": "@{string(workflow())}"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Links": [
+              "Succeeded"
+            ]
+          }
+        },
+        "CRLF": {
+          "type": "Compose",
+          "inputs": "@decodeUriComponent('%0D%0A')",
+          "runAfter": {
+            "Create_run_row": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Ids": {
+          "type": "Compose",
+          "inputs": {
+            "batch": "@{guid()}",
+            "cs": "@{guid()}"
+          },
+          "runAfter": {
+            "CRLF": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Get_list_entity_type": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "HttpRequest",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@outputs('Payload')?['siteUrl']",
+              "parameters/method": "GET",
+              "parameters/uri": "_api/web/lists/getbytitle('@{outputs('Payload')?['listName']}')?$select=ListItemEntityTypeFullName",
+              "parameters/headers": {
+                "Accept": "application/json;odata=nometadata"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Ids": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Batch_parts": {
+          "type": "Select",
+          "inputs": {
+            "from": "@range(0, int(coalesce(outputs('Payload')?['batchSize'], 100)))",
+            "select": "@concat('--changeset_', outputs('Ids')?['cs'], outputs('CRLF'), 'Content-Type: application/http', outputs('CRLF'), 'Content-Transfer-Encoding: binary', outputs('CRLF'), outputs('CRLF'), 'POST ', outputs('Payload')?['siteUrl'], '/_api/web/lists/getbytitle(''', outputs('Payload')?['listName'], ''')/items HTTP/1.1', outputs('CRLF'), 'Content-Type: application/json;odata=verbose', outputs('CRLF'), outputs('CRLF'), '{\"__metadata\":{\"type\":\"', body('Get_list_entity_type')?['ListItemEntityTypeFullName'], '\"},\"Title\":\"', outputs('Payload')?['correlationId'], ' #', string(item()), '\",\"Amount\":', if(and(equals(outputs('Payload')?['injectBadItem'], true), equals(item(), 0)), '\"not-a-number\"', string(item())), '}', outputs('CRLF'), outputs('CRLF'))"
+          },
+          "runAfter": {
+            "Get_list_entity_type": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Batch_body": {
+          "type": "Compose",
+          "inputs": "@concat('--batch_', outputs('Ids')?['batch'], outputs('CRLF'), 'Content-Type: multipart/mixed; boundary=\"changeset_', outputs('Ids')?['cs'], '\"', outputs('CRLF'), 'Content-Transfer-Encoding: binary', outputs('CRLF'), outputs('CRLF'), join(body('Batch_parts'), ''), '--changeset_', outputs('Ids')?['cs'], '--', outputs('CRLF'), outputs('CRLF'), '--batch_', outputs('Ids')?['batch'], '--', outputs('CRLF'))",
+          "runAfter": {
+            "Batch_parts": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Batch_start": {
+          "type": "Compose",
+          "inputs": "@utcNow()",
+          "runAfter": {
+            "Batch_body": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Send_batch": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "HttpRequest",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@outputs('Payload')?['siteUrl']",
+              "parameters/method": "POST",
+              "parameters/uri": "_api/$batch",
+              "parameters/headers": {
+                "Content-Type": "multipart/mixed; boundary=\"batch_@{outputs('Ids')?['batch']}\"",
+                "Accept": "application/json;odata=verbose"
+              },
+              "parameters/body": "@outputs('Batch_body')"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Batch_start": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Response_raw": {
+          "type": "Compose",
+          "inputs": "@string(body('Send_batch'))",
+          "runAfter": {
+            "Send_batch": [
+              "Succeeded",
+              "Failed"
+            ]
+          }
+        },
+        "Response_text": {
+          "type": "Compose",
+          "inputs": "@if(startsWith(outputs('Response_raw'), '{\"$content'), base64ToString(coalesce(json(if(startsWith(outputs('Response_raw'), '{'), outputs('Response_raw'), '{}'))?['$content'], '')), outputs('Response_raw'))",
+          "runAfter": {
+            "Response_raw": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Update_run_row": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "pa_benchmarkruns",
+              "recordId": "@outputs('Create_run_row')?['body/pa_benchmarkrunid']",
+              "item/pa_status": "@if(equals(sub(length(split(outputs('Response_text'), 'HTTP/1.1 201')), 1), int(coalesce(outputs('Payload')?['batchSize'], 100))), 'Succeeded', 'Partial')",
+              "item/pa_endtime": "@utcNow()",
+              "item/pa_durationms": "@div(sub(ticks(utcNow()), ticks(outputs('Start'))), 10000)",
+              "item/pa_recordsprocessed": "@sub(length(split(outputs('Response_text'), 'HTTP/1.1 201')), 1)",
+              "item/pa_connectorcalls": 2,
+              "item/pa_loopiterations": 0,
+              "item/pa_actionsestimated": 14,
+              "item/pa_payloadbytes": "@length(outputs('Batch_body'))",
+              "item/pa_details": "@{string(json(concat('{\"batchHttpStatus\":', string(coalesce(outputs('Send_batch')?['statusCode'], 0)), ',\"batchMs\":', string(div(sub(ticks(utcNow()), ticks(outputs('Batch_start'))), 10000)), ',\"created201\":', string(sub(length(split(outputs('Response_text'), 'HTTP/1.1 201')), 1)), ',\"failed4xx\":', string(sub(length(split(outputs('Response_text'), 'HTTP/1.1 4')), 1)), ',\"failed5xx\":', string(sub(length(split(outputs('Response_text'), 'HTTP/1.1 5')), 1)), ',\"injectBadItem\":', if(equals(outputs('Payload')?['injectBadItem'], true), 'true', 'false'), ',\"links\":', string(outputs('Links')), '}')))}",
+              "item/pa_error": "@{substring(outputs('Response_text'), 0, min(length(outputs('Response_text')), 4000))}"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Response_text": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Respond_to_app": {
+          "type": "Response",
+          "kind": "PowerApp",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "runid": "@{outputs('Links')?['runId']}",
+              "runurl": "@{outputs('Links')?['runUrl']}",
+              "respondedat": "@{utcNow()}"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "runid": {
+                  "title": "runId",
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "runurl": {
+                  "title": "runUrl",
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "respondedat": {
+                  "title": "respondedAt",
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Update_run_row": [
+              "Succeeded"
+            ]
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

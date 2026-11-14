@@ -1,0 +1,195 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "pa_dataverse"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "PowerAppV2",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "title": "payload",
+                  "type": "string",
+                  "description": "JSON payload from the Code App",
+                  "x-ms-dynamically-added": true,
+                  "x-ms-content-hint": "TEXT"
+                }
+              },
+              "required": [
+                "text"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Start": {
+          "type": "Compose",
+          "inputs": "@utcNow()",
+          "runAfter": {}
+        },
+        "Payload": {
+          "type": "Compose",
+          "inputs": "@json(coalesce(triggerBody()?['text'], '{}'))",
+          "runAfter": {
+            "Start": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Links": {
+          "type": "Compose",
+          "inputs": {
+            "environmentId": "@{workflow()?['tags']?['environmentName']}",
+            "flowId": "@{workflow()?['name']}",
+            "runId": "@{workflow()?['run']?['name']}",
+            "runUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}",
+            "runUrlSolution": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/solutions/~preferred/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}",
+            "editUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/edit')}",
+            "detailsUrl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/details')}"
+          },
+          "runAfter": {
+            "Payload": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Create_run_row": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "CreateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "pa_benchmarkruns",
+              "item/pa_name": "@outputs('Payload')?['correlationId']",
+              "item/pa_scenario": "POC",
+              "item/pa_variant": "RespondEarly",
+              "item/pa_technique": "Respond early, then keep working",
+              "item/pa_status": "Running",
+              "item/pa_label": "@{outputs('Payload')?['label']}",
+              "item/pa_volume": "@int(coalesce(outputs('Payload')?['delaySeconds'], 0))",
+              "item/pa_starttime": "@outputs('Start')",
+              "item/pa_runid": "@outputs('Links')?['runId']",
+              "item/pa_flowid": "@outputs('Links')?['flowId']",
+              "item/pa_environmentid": "@outputs('Links')?['environmentId']",
+              "item/pa_runurl": "@outputs('Links')?['runUrl']",
+              "item/pa_runurlsolution": "@outputs('Links')?['runUrlSolution']",
+              "item/pa_editurl": "@outputs('Links')?['editUrl']",
+              "item/pa_details": "@{string(workflow())}"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Links": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Respond_to_app": {
+          "type": "Response",
+          "kind": "PowerApp",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "runid": "@{outputs('Links')?['runId']}",
+              "runurl": "@{outputs('Links')?['runUrl']}",
+              "respondedat": "@{utcNow()}"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "runid": {
+                  "title": "runId",
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "runurl": {
+                  "title": "runUrl",
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "respondedat": {
+                  "title": "respondedAt",
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Create_run_row": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Delay": {
+          "type": "Wait",
+          "inputs": {
+            "interval": {
+              "count": "@max(1, int(coalesce(outputs('Payload')?['delaySeconds'], 1)))",
+              "unit": "Second"
+            }
+          },
+          "runAfter": {
+            "Respond_to_app": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Update_run_row": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "pa_benchmarkruns",
+              "recordId": "@outputs('Create_run_row')?['body/pa_benchmarkrunid']",
+              "item/pa_status": "Succeeded",
+              "item/pa_endtime": "@utcNow()",
+              "item/pa_durationms": "@div(sub(ticks(utcNow()), ticks(outputs('Start'))), 10000)"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {
+            "Delay": [
+              "Succeeded"
+            ]
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

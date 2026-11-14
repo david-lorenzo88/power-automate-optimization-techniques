@@ -1,0 +1,42 @@
+.lab { max-width: 1000px; margin: 0 auto; padding: 24px 16px 64px; display: flex; flex-direction: column; gap: 16px; }
+.lab header h1 { margin: 0 0 4px; font-size: 1.6rem; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+.card h2 { margin: 0 0 12px; font-size: 1.05rem; }
+.muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
+.bad { color: var(--bad); }
+code { background: var(--code); padding: 1px 5px; border-radius: 4px; font-size: 0.85em; }
+
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; word-break: break-all; }
+
+.svc { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.tag { font-size: 0.75rem; padding: 1px 6px; border-radius: 4px; background: var(--code); }
+.tag.flow { background: var(--accent-soft); }
+
+.sp-form { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; margin-bottom: 16px; }
+.sp-form label { display: flex; flex-direction: column; font-size: 0.85rem; gap: 4px; }
+.sp-form label.check { flex-direction: row; align-items: center; }
+.sp-form input:not([type=checkbox]), .sp-form select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); min-width: 140px; }
+.sp-form input[placeholder^=https] { min-width: 340px; }
+
+.tests { display: flex; flex-direction: column; gap: 10px; }
+.test { border-top: 1px solid var(--border); padding-top: 10px; }
+.test-head { display: flex; align-items: center; gap: 8px; }
+.test-head button { margin-left: auto; }
+.test p { margin: 4px 0; }
+.result { font-size: 0.9rem; padding: 6px 10px; border-radius: 6px; background: var(--code); word-break: break-word; }
+.result.pass { background: var(--ok-soft); }
+.result.fail { background: var(--bad-soft); }
+.result.info { background: var(--info-soft); }
+.pill { font-weight: 600; text-transform: uppercase; font-size: 0.75rem; margin-right: 6px; }
+
+button { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--accent); color: white; cursor: pointer; font: inherit; }
+button:disabled { opacity: 0.5; cursor: default; }
+button.link, .links button { background: transparent; color: var(--fg); }
+.links button.on { background: var(--ok-soft); }
+.links button.on.bad { background: var(--bad-soft); }
+.links td { padding: 6px 10px 6px 0; vertical-align: middle; }
+textarea { width: 100%; margin-top: 10px; font-family: ui-monospace, monospace; font-size: 0.8rem; background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; }
+a { color: var(--accent); }
