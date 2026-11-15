@@ -666,7 +666,8 @@ export function buildLabFlows(cfg, ids = {}, { runnable } = {}) {
       },
     }, {}, after('CRLF')),
     Reset_uc5: cond(tgt('uc5'), {
-      Bulk_delete: dvHttp(cfg, 'POST', 'BulkDelete', `@{concat('{"QuerySet":[{"EntityName":"${P}_orderimport","ColumnSet":{"AllColumns":false,"Columns":[]},"Criteria":{"FilterOperator":"And","Conditions":[],"Filters":[]}}],"JobName":"FlowOptLab reset ${P}_orderimport","SendEmailNotification":false,"ToRecipients":[],"CCRecipients":[],"RecurrencePattern":"","StartDateTime":"', utcNow(), '","RunNow":true}')}`, {}),
+      // Asynchronous job: RunNow=true (synchronous) is refused for this table ("does not support Synchronous Bulk Delete").
+      Bulk_delete: dvHttp(cfg, 'POST', 'BulkDelete', `@{concat('{"QuerySet":[{"@odata.type":"Microsoft.Dynamics.CRM.QueryExpression","EntityName":"${P}_orderimport","ColumnSet":{"AllColumns":false,"Columns":[]},"Criteria":{"FilterOperator":"And","Conditions":[]}}],"JobName":"FlowOptLab reset ${P}_orderimport","SendEmailNotification":false,"ToRecipients":[],"CCRecipients":[],"RecurrencePattern":"","StartDateTime":"', utcNow(), '","RunNow":false}')}`, {}),
     }, {}, {}),
     Reset_uc7: cond(tgt('uc7'), {
       Get_uc7: spHttp(cfg, 'GET', `${listUri('UC7Items')}/items?$select=Id&$top=100`, {}),
@@ -681,9 +682,13 @@ export function buildLabFlows(cfg, ids = {}, { runnable } = {}) {
   };
   const resetDone = { Reset_uc4: ANY, Reset_uc5: ANY, Reset_uc7: ANY, ...(cfg.uc9 ? { Reset_uc9: ANY } : {}) };
   resetWork.Remaining_uc4 = spHttp(cfg, 'GET', `${listUri('OrderImport')}?$select=ItemCount`, resetDone);
+  // Per target: done / skipped / FAILED (an If whose condition is false still reports Succeeded, so look inside).
+  const stepState = (ifName, inner) => `if(equals(actions('${ifName}')?['status'], 'Failed'), 'FAILED', if(equals(coalesce(actions('${inner}')?['status'], 'Skipped'), 'Skipped'), 'skipped', 'done'))`;
+  const resetSteps = [['uc4', 'Reset_uc4', 'Delete_until_empty'], ['uc5', 'Reset_uc5', 'Bulk_delete'], ['uc7', 'Reset_uc7', 'R_send'], ...(cfg.uc9 ? [['uc9', 'Reset_uc9', 'Reset_fast']] : [])];
   resetWork.Kpi = kpi({
     processed: '0', calls: '0', actions: String(BASE + 10),
-    checksum: `concat('target=', coalesce(${pl('target')}, 'all'), '|OrderImport=', string(body('Remaining_uc4')?['ItemCount']), '|uc5=', if(equals(actions('Reset_uc5')?['status'], 'Succeeded'), 'BulkDelete job submitted', 'skipped'))`,
+    checksum: `concat('target=', coalesce(${pl('target')}, 'all'), ${resetSteps.map(([t, i, n]) => `'|${t}=', ${stepState(i, n)}`).join(', ')}, '|OrderImport items left=', string(body('Remaining_uc4')?['ItemCount']))`,
+    statusExpr: `if(or(${resetSteps.map(([, i]) => `equals(actions('${i}')?['status'], 'Failed')`).join(', ')}), 'Failed', 'Succeeded')`,
   }, after('Remaining_uc4'));
   add(benchmarkFlow(P, {
     name: 'RESET', scenario: 'ADMIN', variant: 'RESET', technique: 'Reset demo targets (payload.target = uc4 | uc5 | uc7 | uc9 | all)',

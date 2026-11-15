@@ -42,8 +42,10 @@ R = {
     'UC2': dict(vol=200, slow_s=181.2, fast_s=1.5, slow_calls=201, fast_calls=2, x=124, checksum='200|99799.00|66'),
     'UC3': dict(vol=100, slow_s=254.7, fast_s=1.4, slow_act=947, fast_act=20, iters=505, x=177),
     'UC4': dict(vol=1000, slow_s=665.3, mid_s=83.0, fast_s=44.9, slow_calls=1001, mid_calls=1001, fast_calls=5),
-    'UC5': dict(single_ms=182.1, cm_ms=10.1, um_ms=10.7, up_ms=34.6, slow_s_100=28.8, mid_s_100=1.9),
-    'UC6': dict(vol=2000, slow_s=59.6, fast_s=1.1, slow_kb=5943781 / 1024, fast_kb=11623 / 1024, slow_rows=2000, fast_rows=100, slow_calls=101, x=54),
+    'UC5': dict(vol=1000, slow_s=334.1, mid_s=12.6, fast_s=10.4, slow_act=1017, fast_act=19, x=32, single_ms=182.1, cm_ms=10.1),
+    'UC6DV': dict(vol=5000, slow_s=8.8, fast_s=0.25, slow_mb=10.1, fast_b=516, x=36),
+    'UC9': dict(vol=500, slow_s=758.1, fast_s=17.8),
+    'UC6': dict(vol=2000, slow_s=59.6, fast_s=1.1, slow_kb=5943781 / 1024, fast_kb=11623 / 1024, slow_rows=2000, fast_rows=100, slow_calls=101, x=53),
     'UC7': dict(changes=100, slow_runs=100, fast_runs=10),
     'UC8': dict(vol=1000, slow_rows=100, slow_sum='12,163.15', fast_sum='499,995.00'),
     'UC10': dict(vol=200, slow_s=76.0, fast_s=6.2, x=12),
@@ -465,24 +467,24 @@ def build(src, out):
     # 15 --------------------------------------------------------- UC5 Dataverse
     s = S[14]
     kicker(s, 'UC5 · Dataverse bulk create')
-    title(s, 'CreateMultiple: 18× per record, and all-or-nothing')
     u = R['UC5']
+    title(s, f"CreateMultiple: {u['x']}× faster, and all-or-nothing")
     cd = CategoryChartData()
-    cd.categories = ['Single POST', 'CreateMultiple', 'UpdateMultiple', 'UpsertMultiple']
-    cd.add_series('ms per record', (u['single_ms'], u['cm_ms'], u['um_ms'], u['up_ms']))
+    cd.categories = ['Add a new row, loop', 'Same loop, concurrency 50', 'CreateMultiple']
+    cd.add_series('seconds', (u['slow_s'], u['mid_s'], u['fast_s']))
     gf = s.shapes.add_chart(XL_CHART_TYPE.BAR_CLUSTERED, inch(1.12), inch(3.3), inch(10.0), inch(5.6), cd)
-    gf.name = 'Dataverse ms per record chart'
+    gf.name = 'Dataverse bulk create chart'
     ch = gf.chart
     ch.has_legend = False
     ch.has_title = True
-    ch.chart_title.text_frame.text = 'Milliseconds per record (1,000 records, Web API)'
+    ch.chart_title.text_frame.text = f"Seconds to create {num(u['vol'])} rows from a flow"
     tr = ch.chart_title.text_frame.paragraphs[0].runs[0].font
     tr.size = Pt(21); tr.bold = True; tr.color.rgb = NAVY; tr.name = BODY
     plot = ch.plots[0]
     plot.gap_width = 60
     plot.has_data_labels = True
     dl = plot.data_labels
-    dl.number_format = '0.0" ms"'
+    dl.number_format = '0.0" s"'
     dl.number_format_is_linked = False
     dl.position = XL_LABEL_POSITION.OUTSIDE_END
     dl.font.size = Pt(20); dl.font.bold = True; dl.font.color.rgb = NAVY; dl.font.name = BODY
@@ -503,11 +505,11 @@ def build(src, out):
         {'runs': [{'t': '19 of 20', 'size': 44, 'bold': True, 'font': HEAD, 'color': SLOW}]},
         {'t': 'rows created by the loop (Add a new row)', 'size': 20, 'color': MUTED, 'space_after': 12},
         {'runs': [{'t': '0 of 100', 'size': 44, 'bold': True, 'font': HEAD, 'color': FAST}]},
-        {'t': 'rows created by a $batch changeset: rolled back', 'size': 20, 'color': MUTED, 'space_after': 12},
+        {'t': 'rows created by CreateMultiple: the whole request rolled back', 'size': 20, 'color': MUTED, 'space_after': 12},
         {'t': 'CreateMultiple isn\'t in “Perform a bound action”: call it with HTTP with Microsoft Entra ID.', 'size': 20, 'bold': True, 'color': NAVY},
     ], name='Rollback text')
-    footnote(s, f"Flows at 100 rows: loop {secs(u['slow_s_100'])}, loop with concurrency 50 {secs(u['mid_s_100'])}. Chart: Web API timings from our PoC script.", y=9.35)
-    notes(s, 'Demo UC5. CreateMultiple sends up to 1,000 records per request and is one transaction. In our PoC, 10 ms per record versus 182 ms for single creates. '
+    footnote(s, f"Same checksum for all three (1000|499995.00). Web API per record: {u['single_ms']:.0f} ms single vs {u['cm_ms']:.0f} ms CreateMultiple. Seeding 20,000 rows took 49.8 s.", y=9.35)
+    notes(s, 'Demo UC5. CreateMultiple sends up to 1,000 records per request and is one transaction: 1,000 rows in about 10 s instead of 5.6 minutes. Concurrency 50 gets close on speed but bills 1,000 actions and leaves partial data on errors. '
              'It is collection-bound, so the Dataverse connector\'s bound-action picker can\'t call it: use HTTP with Microsoft Entra ID. Changesets roll back; loops leave you with partial data.')
 
     # 16 --------------------------------------------------------- section 04
@@ -522,6 +524,8 @@ def build(src, out):
     pair(s, ('Get items (all columns) → Filter array → Get item per row', [(secs(u['slow_s']), 'duration'), (f"{u['slow_kb'] / 1024:.1f}{NB}MB", 'payload read'), (num(u['slow_calls']), 'connector calls')]),
          ('One REST call: $filter + $select + $expand', [(secs(u['fast_s']), 'duration'), (f"{u['fast_kb']:.0f}{NB}KB", 'payload read'), ('1', 'connector call')]), f"{u['x']}×", h=4.55)
     code(s, 1.12, 8.25, 17.76, 1.35, ["items?$filter=Region eq 'EMEA' and Status eq 'Open'&$select=Title,Amount,Customer/CustomerName&$expand=Customer"], size=18)
+    d = R['UC6DV']
+    footnote(s, f"Dataverse, {num(d['vol'])} rows: FetchXML aggregate {d['fast_s']:.2f} s vs List rows + Filter array {secs(d['slow_s'])} ({d['x']}×, {d['slow_mb']} MB → {d['fast_b']} bytes).", y=9.85)
     notes(s, 'Demo UC6. The slow flow reads 2,000 wide rows (26 columns), filters in the flow, then calls Get item per match for the customer. '
              'The fast one filters, selects and expands the lookup in one call. Put the indexed column first in $filter on big lists.')
 
@@ -595,9 +599,13 @@ def build(src, out):
     kicker(s, 'Scoreboard', dark=True)
     title(s, 'Every pair, same result, measured', dark=True)
     board = [('UC3 Aggregation (100)', R['UC3']['x']), ('UC1 Data shaping (500)', R['UC1']['x']), ('UC2 Join (200)', R['UC2']['x']),
-             ('UC6 Filter at source (2,000)', R['UC6']['x']), ('UC10 Fan-out (200)', R['UC10']['x'])]
+             ('UC6 Filter at source (2,000)', R['UC6']['x']), ('UC6 Dataverse aggregate (5,000)', R['UC6DV']['x']),
+             ('UC5 Dataverse bulk (1,000)', R['UC5']['x']), ('UC10 Fan-out (200)', R['UC10']['x'])]
     if R['UC4']['slow_s']:
         board.append(('UC4 SharePoint bulk (1,000)', round(R['UC4']['slow_s'] / R['UC4']['fast_s'])))
+    if R['UC9']['slow_s']:
+        board.append((f"UC9 Excel ({num(R['UC9']['vol'])})", round(R['UC9']['slow_s'] / R['UC9']['fast_s'])))
+    board.sort(key=lambda b: -b[1])
     cd = CategoryChartData()
     cd.categories = [b[0] for b in board]
     cd.add_series('Speed-up (×)', [b[1] for b in board])

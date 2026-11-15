@@ -8,9 +8,11 @@ Session prep repo (24 Nov 2026, 50 min, Modern Workplace & Endpoint).
 | [docs/02-demo-scenarios.md](docs/02-demo-scenarios.md) | Slow vs fast flow pairs per use case, demo dataset, 50-minute agenda |
 | [docs/03-code-app-benchmark-harness.md](docs/03-code-app-benchmark-harness.md) | Feasibility + design of the Code App that launches each variant and shows KPIs and run/edit links |
 
-Next steps: PoC checklist (doc 03) → build flows + Code App → deck from the PPT template.
+Status: PoC done ([poc/RESULTS.md](poc/RESULTS.md)) → 30 lab flows built and measured ([lab/RESULTS.md](lab/RESULTS.md)) → Code App published → session deck in [deck/](deck/README.md).
 
 | Folder | Content |
 |---|---|
 | [poc/](poc/README.md) | Runnable kit for the PoC checklist: Dataverse setup scripts, PoC flow definitions, bulk API benchmark |
-| [app/](app/) | Code App (React + Vite + `@microsoft/power-apps`), currently the PoC test page |
+| [lab/](lab/README.md) | The slow-vs-fast flows (UC1–UC10) as code, data setup, deploy and CLI runner scripts, results |
+| [app/](app/) | Code App (React + Vite + `@microsoft/power-apps`): Scenarios (run SLOW/MID/FAST, KPIs, speed-up, scoreboard), Seed & reset, PoC checks |
+| [deck/](deck/README.md) | Session deck on the Experts Live template, generated from the measured results |

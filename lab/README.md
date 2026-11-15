@@ -25,7 +25,7 @@ Everything is generated: flow definitions are code (`lab/flows/*.mjs`), and the 
 | UC1 Data shaping | Apply to each → Condition → Compose → Append to array | | Filter array + Select | SP `Orders` 1…N |
 | UC2 Join | Apply to each → query the customer per order | | Dictionary: `json(concat('{', join(Select), '}'))` + key lookup | SP `Orders`, `Customers` |
 | UC3 Aggregation | Loop per region × loop over orders, Increment/Set variable | | `xml()` + `xpath` count/sum, `min()`/`max()`, `union()` group-by | SP `Orders` |
-| UC4 SharePoint bulk | Create item, concurrency 1 | concurrency 50 | `$batch` (≤500 per changeset) via Send HTTP request | SP `OrderImport` |
+| UC4 SharePoint bulk | Create item, concurrency 1 | concurrency 50 | `$batch` (250 per changeset, 4 in parallel) via Send HTTP request | SP `OrderImport` |
 | UC5 Dataverse bulk | Add a new row, concurrency 1 | concurrency 50 | `CreateMultiple`, 1,000 per request (HTTP with Entra ID) | DV `pa_orderimport` |
 | UC6 Filter at source | Get items (all columns, paginated) → Filter array → Get item per row | | REST `$filter` + `$select` + `$expand` | SP `Orders` |
 | UC6DV Aggregate at source | List rows (all columns) → Filter array → sum | | FetchXML aggregate | DV `pa_order` |
@@ -122,6 +122,9 @@ SAS signature: the script fetches it with your `az login` each time and never pr
 | Updating `clientdata` of a flow whose connection references aren't bound fails (400). | Deploy those flows after binding. |
 | A SharePoint lookup column `Customer` is exposed in REST as `CustomerId`. | The text column is named `CustCode`. |
 | `pa` on headless Linux needs a Secret Service keyring (see `poc/RESULTS.md`). | `dbus-daemon` + `gnome-keyring-daemon --unlock`, then `pa auth login --device-code`. |
+| SharePoint processes a `$batch` serially (~100–170 ms per item) and stops after ~90 s of server time. | UC4-FAST sends batches of 250, 4 in parallel; SEED-SP does the same. |
+| Dataverse `BulkDelete` with `RunNow: true` is refused (*does not support Synchronous Bulk Delete*). | RESET submits an asynchronous job (`RunNow: false`) with a typed `QueryExpression`. |
+| An `If` whose condition is false reports *Succeeded*. | RESET reports each target as done / skipped / FAILED by looking at the action inside. |
 
 ## Results
 

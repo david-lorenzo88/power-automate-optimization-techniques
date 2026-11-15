@@ -25,4 +25,4 @@ python deck/build_deck.py /tmp/skeleton.pptx deck/From-Hours-to-Seconds-ExpertsL
 | 11 | 02 Aggregate without iterating | 23 | Take home |
 | 12 | UC3 xpath | 24 | Thank you |
 
-Not on slides yet (not measured): UC5-FAST as a flow (the chart uses the PoC Web API timings), UC6-DV, UC9 Excel.
+All numbers come from `lab/RESULTS.md` (UC9 Excel and UC6-DV appear on the scoreboard and the UC6 slide).

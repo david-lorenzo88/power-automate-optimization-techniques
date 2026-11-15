@@ -374,7 +374,7 @@
                         "OData-Version": "4.0",
                         "OData-MaxVersion": "4.0"
                       },
-                      "request/body": "@{concat('{\"QuerySet\":[{\"EntityName\":\"pa_orderimport\",\"ColumnSet\":{\"AllColumns\":false,\"Columns\":[]},\"Criteria\":{\"FilterOperator\":\"And\",\"Conditions\":[],\"Filters\":[]}}],\"JobName\":\"FlowOptLab reset pa_orderimport\",\"SendEmailNotification\":false,\"ToRecipients\":[],\"CCRecipients\":[],\"RecurrencePattern\":\"\",\"StartDateTime\":\"', utcNow(), '\",\"RunNow\":true}')}"
+                      "request/body": "@{concat('{\"QuerySet\":[{\"@odata.type\":\"Microsoft.Dynamics.CRM.QueryExpression\",\"EntityName\":\"pa_orderimport\",\"ColumnSet\":{\"AllColumns\":false,\"Columns\":[]},\"Criteria\":{\"FilterOperator\":\"And\",\"Conditions\":[]}}],\"JobName\":\"FlowOptLab reset pa_orderimport\",\"SendEmailNotification\":false,\"ToRecipients\":[],\"CCRecipients\":[],\"RecurrencePattern\":\"\",\"StartDateTime\":\"', utcNow(), '\",\"RunNow\":false}')}"
                     },
                     "authentication": "@parameters('$authentication')"
                   },
@@ -623,7 +623,8 @@
                 "connectorCalls": "@0",
                 "actionsEstimated": "@24",
                 "payloadBytes": "@0",
-                "checksum": "@{concat('target=', coalesce(outputs('Payload')?['target'], 'all'), '|OrderImport=', string(body('Remaining_uc4')?['ItemCount']), '|uc5=', if(equals(actions('Reset_uc5')?['status'], 'Succeeded'), 'BulkDelete job submitted', 'skipped'))}"
+                "checksum": "@{concat('target=', coalesce(outputs('Payload')?['target'], 'all'), '|uc4=', if(equals(actions('Reset_uc4')?['status'], 'Failed'), 'FAILED', if(equals(coalesce(actions('Delete_until_empty')?['status'], 'Skipped'), 'Skipped'), 'skipped', 'done')), '|uc5=', if(equals(actions('Reset_uc5')?['status'], 'Failed'), 'FAILED', if(equals(coalesce(actions('Bulk_delete')?['status'], 'Skipped'), 'Skipped'), 'skipped', 'done')), '|uc7=', if(equals(actions('Reset_uc7')?['status'], 'Failed'), 'FAILED', if(equals(coalesce(actions('R_send')?['status'], 'Skipped'), 'Skipped'), 'skipped', 'done')), '|uc9=', if(equals(actions('Reset_uc9')?['status'], 'Failed'), 'FAILED', if(equals(coalesce(actions('Reset_fast')?['status'], 'Skipped'), 'Skipped'), 'skipped', 'done')), '|OrderImport items left=', string(body('Remaining_uc4')?['ItemCount']))}",
+                "status": "@{if(or(equals(actions('Reset_uc4')?['status'], 'Failed'), equals(actions('Reset_uc5')?['status'], 'Failed'), equals(actions('Reset_uc7')?['status'], 'Failed'), equals(actions('Reset_uc9')?['status'], 'Failed')), 'Failed', 'Succeeded')}"
               },
               "runAfter": {
                 "Remaining_uc4": [
@@ -664,7 +665,7 @@
             "parameters": {
               "entityName": "pa_benchmarkruns",
               "recordId": "@outputs('Create_run_row')?['body/pa_benchmarkrunid']",
-              "item/pa_status": "@{if(equals(actions('Work')?['status'], 'Succeeded'), coalesce(outputs('Kpi')?['status'], 'Succeeded'), 'Failed')}",
+              "item/pa_status": "@{coalesce(outputs('Kpi')?['status'], if(equals(actions('Work')?['status'], 'Succeeded'), 'Succeeded', 'Failed'))}",
               "item/pa_endtime": "@utcNow()",
               "item/pa_durationms": "@div(sub(ticks(utcNow()), ticks(outputs('Start'))), 10000)",
               "item/pa_recordsprocessed": "@outputs('Kpi')?['recordsProcessed']",

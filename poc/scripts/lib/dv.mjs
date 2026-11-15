@@ -57,7 +57,17 @@ export async function dv(method, path, body, extraHeaders = {}) {
     }
   }
   const started = performance.now();
-  const res = await fetch(url, { method, headers, body: payload });
+  // A stalled connection must not hang a script forever: 2-minute timeout, retry network errors twice.
+  let res;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      res = await fetch(url, { method, headers, body: payload, signal: AbortSignal.timeout(120_000) });
+      break;
+    } catch (e) {
+      if (attempt >= 2) throw e;
+      await new Promise((r) => setTimeout(r, 3000 * (attempt + 1)));
+    }
+  }
   const ms = Math.round(performance.now() - started);
   const text = await res.text();
   let json;

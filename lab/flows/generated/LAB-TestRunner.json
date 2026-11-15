@@ -431,6 +431,41 @@
             ]
           }
         },
+        "If_UC5_FAST": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@triggerBody()?['flow']",
+                  "UC5-FAST"
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Run_UC5_FAST": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "e27c3bf2-62e0-f111-84e8-0022480b18ff"
+                },
+                "body": {
+                  "text": "@{string(triggerBody()?['payload'])}"
+                }
+              },
+              "runAfter": {}
+            }
+          },
+          "else": {
+            "actions": {}
+          },
+          "runAfter": {
+            "Accepted": [
+              "Succeeded"
+            ]
+          }
+        },
         "If_UC6_SLOW": {
           "type": "If",
           "expression": {
@@ -676,6 +711,76 @@
             ]
           }
         },
+        "If_UC9_SLOW": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@triggerBody()?['flow']",
+                  "UC9-SLOW"
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Run_UC9_SLOW": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "6fccea31-63e0-f111-84e8-0022480b18ff"
+                },
+                "body": {
+                  "text": "@{string(triggerBody()?['payload'])}"
+                }
+              },
+              "runAfter": {}
+            }
+          },
+          "else": {
+            "actions": {}
+          },
+          "runAfter": {
+            "Accepted": [
+              "Succeeded"
+            ]
+          }
+        },
+        "If_UC9_FAST": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@triggerBody()?['flow']",
+                  "UC9-FAST"
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Run_UC9_FAST": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "8d739d2d-63e0-f111-84ea-0022480b19a1"
+                },
+                "body": {
+                  "text": "@{string(triggerBody()?['payload'])}"
+                }
+              },
+              "runAfter": {}
+            }
+          },
+          "else": {
+            "actions": {}
+          },
+          "runAfter": {
+            "Accepted": [
+              "Succeeded"
+            ]
+          }
+        },
         "If_UC10_SLOW": {
           "type": "If",
           "expression": {
@@ -764,6 +869,76 @@
               "inputs": {
                 "host": {
                   "workflowReferenceName": "801d303b-63e0-f111-84ea-0022480b19a1"
+                },
+                "body": {
+                  "text": "@{string(triggerBody()?['payload'])}"
+                }
+              },
+              "runAfter": {}
+            }
+          },
+          "else": {
+            "actions": {}
+          },
+          "runAfter": {
+            "Accepted": [
+              "Succeeded"
+            ]
+          }
+        },
+        "If_SEED_DV": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@triggerBody()?['flow']",
+                  "SEED-DV"
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Run_SEED_DV": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "b7917d44-63e0-f111-84e8-0022480b18ff"
+                },
+                "body": {
+                  "text": "@{string(triggerBody()?['payload'])}"
+                }
+              },
+              "runAfter": {}
+            }
+          },
+          "else": {
+            "actions": {}
+          },
+          "runAfter": {
+            "Accepted": [
+              "Succeeded"
+            ]
+          }
+        },
+        "If_RESET": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@triggerBody()?['flow']",
+                  "RESET"
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Run_RESET": {
+              "type": "Workflow",
+              "inputs": {
+                "host": {
+                  "workflowReferenceName": "7a63d547-63e0-f111-84e8-7ced8d6f7afa"
                 },
                 "body": {
                   "text": "@{string(triggerBody()?['payload'])}"

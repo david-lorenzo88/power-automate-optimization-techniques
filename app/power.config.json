@@ -310,6 +310,66 @@
         "workflowDisplayName": "UC10-FAST",
         "workflowName": "3ee91a6e-1ea1-fade-303c-905316db284e"
       }
+    },
+    "4e157312-b75e-4338-b7ef-0d9cac637235": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc5_fast"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "e27c3bf2-62e0-f111-84e8-0022480b18ff",
+        "workflowDisplayName": "UC5-FAST",
+        "workflowName": "7afd7436-2c66-19c4-ac72-4e4282419daa"
+      }
+    },
+    "7e8873a0-64c7-4960-b37f-d24e1ec04c2c": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc9_slow"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "6fccea31-63e0-f111-84e8-0022480b18ff",
+        "workflowDisplayName": "UC9-SLOW",
+        "workflowName": "47335bc8-c515-017e-08e2-6a2b79a25ae3"
+      }
+    },
+    "1684bcfa-8a07-45ec-818a-d12ad4dbf4d6": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc9_fast"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "8d739d2d-63e0-f111-84ea-0022480b19a1",
+        "workflowDisplayName": "UC9-FAST",
+        "workflowName": "9e924172-6576-f2a2-89e7-9e48ed11035b"
+      }
+    },
+    "6a33b09b-5bf5-4a06-9af5-675c2cd271a4": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "seed_dv"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "b7917d44-63e0-f111-84e8-0022480b18ff",
+        "workflowDisplayName": "SEED-DV",
+        "workflowName": "983cde9e-a07c-1917-0e2c-adec8f380042"
+      }
+    },
+    "502cbbf2-39de-4115-82f3-a998b2647fe4": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "reset"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "7a63d547-63e0-f111-84e8-7ced8d6f7afa",
+        "workflowDisplayName": "RESET",
+        "workflowName": "82f9942a-f819-3aa7-d43d-88b806f2900c"
+      }
     }
   },
   "databaseReferences": {

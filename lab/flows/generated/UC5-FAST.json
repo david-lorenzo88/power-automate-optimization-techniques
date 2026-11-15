@@ -253,7 +253,8 @@
                 "connectorCalls": "@add(length(outputs('Chunks')), 1)",
                 "actionsEstimated": "@add(17, mul(2, length(outputs('Chunks'))))",
                 "payloadBytes": "@0",
-                "checksum": "@{concat(string(coalesce(first(body('Verify')?['value'])?['n'], 0)), '|', formatNumber(float(coalesce(first(body('Verify')?['value'])?['s'], 0)), '0.00', 'en-US'))}"
+                "checksum": "@{concat(string(coalesce(first(body('Verify')?['value'])?['n'], 0)), '|', formatNumber(float(coalesce(first(body('Verify')?['value'])?['s'], 0)), '0.00', 'en-US'))}",
+                "status": "@{if(less(int(coalesce(first(body('Verify')?['value'])?['n'], 0)), outputs('Volume')), 'Partial', 'Succeeded')}"
               },
               "runAfter": {
                 "Verify": [
@@ -294,7 +295,7 @@
             "parameters": {
               "entityName": "pa_benchmarkruns",
               "recordId": "@outputs('Create_run_row')?['body/pa_benchmarkrunid']",
-              "item/pa_status": "@{if(equals(actions('Work')?['status'], 'Succeeded'), coalesce(outputs('Kpi')?['status'], 'Succeeded'), 'Failed')}",
+              "item/pa_status": "@{coalesce(outputs('Kpi')?['status'], if(equals(actions('Work')?['status'], 'Succeeded'), 'Succeeded', 'Failed'))}",
               "item/pa_endtime": "@utcNow()",
               "item/pa_durationms": "@div(sub(ticks(utcNow()), ticks(outputs('Start'))), 10000)",
               "item/pa_recordsprocessed": "@outputs('Kpi')?['recordsProcessed']",
