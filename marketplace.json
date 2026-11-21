@@ -1,0 +1,16 @@
+{
+  "name": "power-automate-optimization",
+  "owner": {
+    "name": "David Lorenzo López"
+  },
+  "metadata": {
+    "description": "Power Automate flow optimization skills for Claude Code and GitHub Copilot",
+    "pluginRoot": "."
+  },
+  "plugins": [
+    {
+      "name": "power-automate-best-practices",
+      "source": "./plugins/power-automate-best-practices"
+    }
+  ]
+}

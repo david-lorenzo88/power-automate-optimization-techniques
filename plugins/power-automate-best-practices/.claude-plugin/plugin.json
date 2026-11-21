@@ -1,0 +1,18 @@
+{
+  "name": "power-automate-best-practices",
+  "version": "1.0.0",
+  "description": "Performance best practices for Power Automate cloud flows: no unnecessary loops, bulk reads and writes, filtering at the source, safe concurrency, trigger conditions and early responses. Includes a deterministic flow linter. Designed to run alongside the power-automate plugin from microsoft/power-platform-skills.",
+  "author": {
+    "name": "David Lorenzo López"
+  },
+  "homepage": "https://github.com/david-lorenzo88/power-automate-optimization-techniques",
+  "repository": "https://github.com/david-lorenzo88/power-automate-optimization-techniques",
+  "keywords": [
+    "power-automate",
+    "cloud-flows",
+    "performance",
+    "best-practices",
+    "linter",
+    "power-platform"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "power-automate-best-practices",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Power Automate flow best-practice skills and linter for GitHub Copilot and Claude Code",
+  "scripts": {
+    "lint-flow": "node skills/flow-best-practices/scripts/lint-flow.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

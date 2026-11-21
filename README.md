@@ -16,3 +16,17 @@ Status: PoC done ([poc/RESULTS.md](poc/RESULTS.md)) → 30 lab flows built and m
 | [lab/](lab/README.md) | The slow-vs-fast flows (UC1–UC10) as code, data setup, deploy and CLI runner scripts, results |
 | [app/](app/) | Code App (React + Vite + `@microsoft/power-apps`): Scenarios (run SLOW/MID/FAST, KPIs, speed-up, scoreboard), Seed & reset, PoC checks |
 | [deck/](deck/README.md) | Session deck on the Experts Live template (the one shared with the co-speaker), updated with the measured results |
+
+## Skills for GitHub Copilot and Claude Code
+
+[`plugins/power-automate-best-practices`](plugins/power-automate-best-practices/README.md) packages everything learned here as
+two agent skills plus a flow linter, to use alongside Microsoft's `power-automate` plugin
+([microsoft/power-platform-skills](https://github.com/microsoft/power-platform-skills)):
+
+```bash
+/plugin marketplace add david-lorenzo88/power-automate-optimization-techniques
+```
+
+```bash
+/plugin install power-automate-best-practices@power-automate-optimization
+```
