@@ -1,0 +1,113 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "pa_sharepoint"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      },
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "pa_dataverse"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_an_item_is_created_or_modified": {
+          "type": "OpenApiConnection",
+          "recurrence": {
+            "interval": 1,
+            "frequency": "Minute"
+          },
+          "splitOn": "@triggerOutputs()?['body/value']",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetOnUpdatedItems",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "https://davidlorenzolopez.sharepoint.com",
+              "table": "eeefe354-6a06-4eea-b8b2-bf543157e85c"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "conditions": [
+            {
+              "expression": "@equals(triggerOutputs()?['body/Status'], 'Approved')"
+            },
+            {
+              "expression": "@not(empty(triggerOutputs()?['body/CorrelationId']))"
+            }
+          ]
+        }
+      },
+      "actions": {
+        "Log_run": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "CreateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "pa_benchmarkruns",
+              "item/pa_name": "@{concat(triggerOutputs()?['body/CorrelationId'], '-', triggerOutputs()?['body/ID'], '-FAST-', workflow()?['run']?['name'])}",
+              "item/pa_scenario": "UC7",
+              "item/pa_variant": "FAST",
+              "item/pa_technique": "Trigger conditions",
+              "item/pa_status": "Relevant",
+              "item/pa_label": "@{triggerOutputs()?['body/CorrelationId']}",
+              "item/pa_starttime": "@utcNow()",
+              "item/pa_endtime": "@utcNow()",
+              "item/pa_volume": 1,
+              "item/pa_runid": "@{workflow()?['run']?['name']}",
+              "item/pa_flowid": "@{workflow()?['name']}",
+              "item/pa_environmentid": "@{workflow()?['tags']?['environmentName']}",
+              "item/pa_runurl": "@{concat('https://make.powerautomate.com/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'])}",
+              "item/pa_details": "@{concat('{\"itemId\":', string(triggerOutputs()?['body/ID']), ',\"status\":\"', triggerOutputs()?['body/Status'], '\"}')}"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runAfter": {}
+        },
+        "Process": {
+          "type": "Compose",
+          "inputs": {
+            "itemId": "@triggerOutputs()?['body/ID']",
+            "processedAt": "@utcNow()"
+          },
+          "runAfter": {
+            "Log_run": [
+              "Succeeded"
+            ]
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

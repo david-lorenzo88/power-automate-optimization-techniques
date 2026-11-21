@@ -12,6 +12,12 @@ export interface RunRow {
   durationMs?: number;
   volume?: number;
   recordsProcessed?: number;
+  recordsRetrieved?: number;
+  loopIterations?: number;
+  checksum?: string;
+  label?: string;
+  technique?: string;
+  startTime?: string;
   connectorCalls?: number;
   actionsEstimated?: number;
   payloadBytes?: number;
@@ -36,6 +42,12 @@ export function toRunRow(r: Record<string, unknown>): RunRow {
     durationMs: n('durationms'),
     volume: n('volume'),
     recordsProcessed: n('recordsprocessed'),
+    recordsRetrieved: n('recordsretrieved'),
+    loopIterations: n('loopiterations'),
+    checksum: s('resultchecksum'),
+    label: s('label'),
+    technique: s('technique'),
+    startTime: s('starttime'),
     connectorCalls: n('connectorcalls'),
     actionsEstimated: n('actionsestimated'),
     payloadBytes: n('payloadbytes'),
@@ -87,7 +99,7 @@ export async function launchAndTrack(
   flowNamePart: string,
   payload: Record<string, unknown>,
   onUpdate: (r: TrackedRun) => void,
-  { pollMs = 2000, timeoutMs = 6 * 60_000 } = {},
+  { pollMs = 2000, timeoutMs = 6 * 60_000, keepPollingAfterResponse = true } = {},
 ): Promise<TrackedRun> {
   const run = await findFlow(flowNamePart);
   if (!run) throw new Error(`Flow service for "${flowNamePart}" not generated. Run: pa app add flow --flow-id <id>`);
@@ -128,10 +140,28 @@ export async function launchAndTrack(
     }
     emit();
     const done = tracked.row?.status && tracked.row.status !== 'Running' && tracked.row.status !== 'PollError';
-    if (done && invokeSettled) break;
+    if (done && (invokeSettled || !keepPollingAfterResponse)) break;
+    // Long SLOW runs: poll less often after the first minute.
+    if (Date.now() - tracked.startedAt > 60_000) await sleep(pollMs * 2);
   }
   tracked.finished = true;
   tracked.timedOut = !(tracked.row?.status && tracked.row.status !== 'Running');
   emit();
   return tracked;
+}
+
+/** Latest telemetry rows (newest first), e.g. for the scoreboard. */
+export async function getHistory({ top = 500, filter }: { top?: number; filter?: string } = {}): Promise<RunRow[]> {
+  const table = await findTable('benchmarkrun');
+  if (!table) return [];
+  const res = await table.getAll({ filter, top, orderBy: [`${col('starttime')} desc`] });
+  if (!res.success) throw res.error ?? new Error('getAll failed');
+  return (res.data ?? []).map(toRunRow);
+}
+
+/** UC7: rows logged by the automated flows for one driver run (label = driver correlationId). */
+export async function getTriggeredRuns(driverCorrelationId: string): Promise<{ SLOW: number; FAST: number; relevantSlow: number }> {
+  const rows = await getHistory({ top: 5000, filter: `${col('label')} eq '${driverCorrelationId}' and ${col('scenario')} eq 'UC7'` });
+  const slow = rows.filter((r) => r.variant === 'SLOW');
+  return { SLOW: slow.length, FAST: rows.filter((r) => r.variant === 'FAST').length, relevantSlow: slow.filter((r) => r.status === 'Relevant').length };
 }

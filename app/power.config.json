@@ -1,0 +1,387 @@
+{
+  "version": "1.0",
+  "appId": "fb0ed9e0-6b0e-43ab-8ff8-2a7c4687fdc6",
+  "appDisplayName": "Flow Optimization Lab",
+  "region": "prod",
+  "appType": "CodeApp",
+  "environmentId": "df93e55c-cf3b-e261-87e1-ddb2b052de1d",
+  "description": " ",
+  "buildPath": "./dist",
+  "buildEntryPoint": "index.html",
+  "localAppUrl": "http://localhost:3000",
+  "logoPath": "Default",
+  "connectionReferences": {
+    "8704310d-9118-4c1b-8af0-f0d8571ef38f": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "pocrespondearly"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "ea8d1bac-56e0-f111-84ea-0022480b19a1",
+        "workflowDisplayName": "PocRespondEarly",
+        "workflowName": "5981b82f-deee-c10e-1fe4-88c2fae0efda"
+      }
+    },
+    "09a60532-77be-49c4-a049-35652f95c6b2": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "pocrespondlate"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "162174b3-56e0-f111-84e8-7ced8d6f7afa",
+        "workflowDisplayName": "PocRespondLate",
+        "workflowName": "88346a50-54fa-4bba-ad73-2e885060481d"
+      }
+    },
+    "182a0019-a8fc-4bb0-acb7-d6bf66c25da2": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "pocnorespond"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "5efc92c0-56e0-f111-84ea-0022480b19a1",
+        "workflowDisplayName": "PocNoRespond",
+        "workflowName": "9479e24d-ed68-9cdd-3178-de191c816ce4"
+      }
+    },
+    "fb92ee73-952f-43c9-887a-28c7076aa18d": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "pocspbatch"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "cee71cc7-56e0-f111-84ea-0022480b19a1",
+        "workflowDisplayName": "PocSpBatch",
+        "workflowName": "7c753364-30d6-1edc-f62f-707e0ec09d00"
+      }
+    },
+    "64caa6b0-ce6d-401a-90a8-d7144eedded1": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc1_slow"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "5c1624a3-62e0-f111-84e8-0022480b18ff",
+        "workflowDisplayName": "UC1-SLOW",
+        "workflowName": "a93109a3-07d8-96a3-0877-5e199710c768"
+      }
+    },
+    "a24d0adc-75f7-4564-9f1e-abe465cdfe84": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc1_fast"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "8197c3ac-62e0-f111-84e8-0022480b18ff",
+        "workflowDisplayName": "UC1-FAST",
+        "workflowName": "fcd8ad46-3bd0-b342-c015-7bb2933486ec"
+      }
+    },
+    "28690d59-42ca-47f3-bd5e-652468e1f5ec": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc2_slow"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "c92454b4-62e0-f111-84ea-0022480b19a1",
+        "workflowDisplayName": "UC2-SLOW",
+        "workflowName": "9eb7810f-6dd1-557b-3cab-89ad4e843fb8"
+      }
+    },
+    "685dac0d-6bf6-40cc-9236-561801a0313c": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc2_fast"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "531224bb-62e0-f111-84e8-7ced8d6f7afa",
+        "workflowDisplayName": "UC2-FAST",
+        "workflowName": "14eda8ad-0004-d39e-f25c-f2d0767f3da8"
+      }
+    },
+    "d29b489e-8d41-49d6-9fb9-7a40ad513956": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc3_slow"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "eef2a6c2-62e0-f111-84e8-0022480b18ff",
+        "workflowDisplayName": "UC3-SLOW",
+        "workflowName": "50896918-1771-94f9-3690-ab1265164813"
+      }
+    },
+    "92e32685-a576-4faf-a335-ff71448f79ad": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc3_fast"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "1f540bca-62e0-f111-84e8-7ced8d6f7afa",
+        "workflowDisplayName": "UC3-FAST",
+        "workflowName": "26dc28dc-c467-e639-2637-675407be0229"
+      }
+    },
+    "d87c74f4-296f-4a44-b1f9-29d8379b699c": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc4_slow"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "d3dd5dd1-62e0-f111-84ea-0022480b1720",
+        "workflowDisplayName": "UC4-SLOW",
+        "workflowName": "3754993f-efd2-29d8-4682-ddd6f97193e8"
+      }
+    },
+    "e39f6012-bea8-404b-9c70-acb7068a9c65": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc4_mid"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "9aa5d5d7-62e0-f111-84e8-0022480b18ff",
+        "workflowDisplayName": "UC4-MID",
+        "workflowName": "b63c3435-ea3a-4a9b-cfcc-2360eabb311d"
+      }
+    },
+    "69e76880-a267-43c4-9985-7fa52f4473da": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc4_fast"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "671055e1-62e0-f111-84e8-7ced8d6f7afa",
+        "workflowDisplayName": "UC4-FAST",
+        "workflowName": "d529edcf-97a4-7464-b0fc-c34f5741ef32"
+      }
+    },
+    "60526e8c-6428-4d7e-a81e-61f3b83346dd": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc5_slow"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "6cdf3be8-62e0-f111-84e8-7ced8d6f7afa",
+        "workflowDisplayName": "UC5-SLOW",
+        "workflowName": "8fb0d164-3102-17a0-8460-d1cc8b3002ba"
+      }
+    },
+    "eb986729-9f67-4f03-b2a0-6f27c6e33de4": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc5_mid"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "3b3265ef-62e0-f111-84ea-0022480b19a1",
+        "workflowDisplayName": "UC5-MID",
+        "workflowName": "580faa6f-e697-a5e7-f2c7-feb268d7722a"
+      }
+    },
+    "7480ef38-aace-4f78-97e6-1642928d2b3d": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc6_slow"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "f17c3bf2-62e0-f111-84e8-0022480b18ff",
+        "workflowDisplayName": "UC6-SLOW",
+        "workflowName": "4d7028a6-479a-cf71-26b9-9e874f0ea72a"
+      }
+    },
+    "94183150-85e7-4214-a3b0-ed3e8f0acbbf": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc6_fast"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "3665d0fb-62e0-f111-84e8-7ced8d6f7afa",
+        "workflowDisplayName": "UC6-FAST",
+        "workflowName": "58b09a6c-2232-3bdf-365c-c679b2c329d1"
+      }
+    },
+    "39bdd673-a850-445f-9e5f-6106eb4d17d2": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc6dv_slow"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "9417e904-63e0-f111-84e8-0022480b18ff",
+        "workflowDisplayName": "UC6DV-SLOW",
+        "workflowName": "2a96f79b-1fec-5cc4-bb16-96440dc83d7f"
+      }
+    },
+    "bbb04a16-d07e-49f1-ac3e-5f3d0dfbebdf": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc6dv_fast"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "9724df0a-63e0-f111-84e8-0022480b18ff",
+        "workflowDisplayName": "UC6DV-FAST",
+        "workflowName": "69cdb920-36fd-fa16-06d9-6b12b766d181"
+      }
+    },
+    "87cf728a-930b-4c1c-93d0-618f8a26b413": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc7_driver"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "f5a20c12-63e0-f111-84e8-7ced8d6f7afa",
+        "workflowDisplayName": "UC7-DRIVER",
+        "workflowName": "fab1071f-a911-cb68-48fe-0deaf74e6b73"
+      }
+    },
+    "f8d65efe-cc88-43e1-9951-125c4b07f5a0": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc8_slow"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "a27bd523-63e0-f111-84e8-0022480b18ff",
+        "workflowDisplayName": "UC8-SLOW",
+        "workflowName": "1cb60c16-49fa-16cd-c26d-6eaaa9f5566c"
+      }
+    },
+    "fa6b3c5b-8f08-4c0f-9bf2-711043b04f15": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc8_fast"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "af15d526-63e0-f111-84e8-7ced8d6f7afa",
+        "workflowDisplayName": "UC8-FAST",
+        "workflowName": "4e6bdede-7208-f24e-f95a-e86916de126a"
+      }
+    },
+    "b73ce32f-40ff-4c0c-975b-2f2b36b26035": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc10_slow"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "77482e31-63e0-f111-84e8-7ced8d6f7afa",
+        "workflowDisplayName": "UC10-SLOW",
+        "workflowName": "fa3c8d00-8a52-10ef-331f-0f87dafe5090"
+      }
+    },
+    "717d04b9-298b-46bd-a77d-f3279308507b": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "seed_sp"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "801d303b-63e0-f111-84ea-0022480b19a1",
+        "workflowDisplayName": "SEED-SP",
+        "workflowName": "13676196-562f-f01c-eaff-0d3139754f3d"
+      }
+    },
+    "e979cd67-2a49-4aa2-a9a1-c62b7431041d": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc10_fast"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "8464fc45-63e0-f111-84ea-0022480b19a1",
+        "workflowDisplayName": "UC10-FAST",
+        "workflowName": "3ee91a6e-1ea1-fade-303c-905316db284e"
+      }
+    },
+    "4e157312-b75e-4338-b7ef-0d9cac637235": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc5_fast"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "e27c3bf2-62e0-f111-84e8-0022480b18ff",
+        "workflowDisplayName": "UC5-FAST",
+        "workflowName": "7afd7436-2c66-19c4-ac72-4e4282419daa"
+      }
+    },
+    "7e8873a0-64c7-4960-b37f-d24e1ec04c2c": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc9_slow"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "6fccea31-63e0-f111-84e8-0022480b18ff",
+        "workflowDisplayName": "UC9-SLOW",
+        "workflowName": "47335bc8-c515-017e-08e2-6a2b79a25ae3"
+      }
+    },
+    "1684bcfa-8a07-45ec-818a-d12ad4dbf4d6": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "uc9_fast"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "8d739d2d-63e0-f111-84ea-0022480b19a1",
+        "workflowDisplayName": "UC9-FAST",
+        "workflowName": "9e924172-6576-f2a2-89e7-9e48ed11035b"
+      }
+    },
+    "6a33b09b-5bf5-4a06-9af5-675c2cd271a4": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "seed_dv"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "b7917d44-63e0-f111-84e8-0022480b18ff",
+        "workflowDisplayName": "SEED-DV",
+        "workflowName": "983cde9e-a07c-1917-0e2c-adec8f380042"
+      }
+    },
+    "502cbbf2-39de-4115-82f3-a998b2647fe4": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+      "displayName": "Logic flows",
+      "dataSources": [
+        "reset"
+      ],
+      "workflowDetails": {
+        "workflowEntityId": "7a63d547-63e0-f111-84e8-7ced8d6f7afa",
+        "workflowDisplayName": "RESET",
+        "workflowName": "82f9942a-f819-3aa7-d43d-88b806f2900c"
+      }
+    }
+  },
+  "databaseReferences": {
+    "default.cds": {
+      "dataSources": {
+        "benchmarkruns": {
+          "entitySetName": "pa_benchmarkruns",
+          "logicalName": "pa_benchmarkrun",
+          "isHidden": false
+        }
+      },
+      "environmentVariableName": ""
+    }
+  }
+}

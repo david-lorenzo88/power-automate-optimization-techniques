@@ -1,0 +1,70 @@
+{
+  "tag": "poc-2026-11-14T18-15-00-075Z",
+  "N": 1000,
+  "results": [
+    {
+      "test": "Single POST (sequential)",
+      "records": 100,
+      "httpRequests": 100,
+      "ms": 18212,
+      "msPerRecord": 182.1,
+      "note": "extrapolated to N=1000: ~182 s"
+    },
+    {
+      "test": "CreateMultiple (1000/request)",
+      "records": 1000,
+      "httpRequests": 1,
+      "ms": 10141,
+      "msPerRecord": 10.1,
+      "note": ""
+    },
+    {
+      "test": "UpdateMultiple (1000/request)",
+      "records": 1100,
+      "httpRequests": 2,
+      "ms": 11788,
+      "msPerRecord": 10.7,
+      "note": ""
+    },
+    {
+      "test": "UpsertMultiple (alt key, 50% new)",
+      "records": 1000,
+      "httpRequests": 1,
+      "ms": 34551,
+      "msPerRecord": 34.6,
+      "note": ""
+    },
+    {
+      "test": "$batch changeset 100 creates (valid)",
+      "records": 100,
+      "httpRequests": 1,
+      "ms": 2434,
+      "msPerRecord": 24.3,
+      "note": "HTTP 200, rows created: 100"
+    },
+    {
+      "test": "$batch changeset 100 creates (1 invalid)",
+      "records": 100,
+      "httpRequests": 1,
+      "ms": 946,
+      "msPerRecord": 9.5,
+      "note": "HTTP 400, rows created: 0 → ✅ rolled back"
+    },
+    {
+      "test": "$batch no changeset + continue-on-error (1 invalid)",
+      "records": 100,
+      "httpRequests": 1,
+      "ms": 2951,
+      "msPerRecord": 29.5,
+      "note": "HTTP 200, rows created: 99 (expect 99)"
+    },
+    {
+      "test": "$batch DELETE (1000/request)",
+      "records": 1799,
+      "httpRequests": 2,
+      "ms": 516853,
+      "msPerRecord": 287.3,
+      "note": "remaining: 0"
+    }
+  ]
+}

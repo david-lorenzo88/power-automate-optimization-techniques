@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-11-14T19:27:46.432Z",
+  "environmentId": "df93e55c-cf3b-e261-87e1-ddb2b052de1d",
+  "dataverseUrl": "https://premium-us.crm.dynamics.com",
+  "solution": "FlowOptimizationLab",
+  "prefix": "pa",
+  "siteUrl": "https://davidlorenzolopez.sharepoint.com",
+  "lists": {
+    "Customers": {
+      "id": "f3cdc46e-ed75-4857-991e-ec7a82055232",
+      "entityType": "SP.Data.CustomersListItem"
+    },
+    "Orders": {
+      "id": "9dfbe96c-ae54-4ede-ab70-759f66b603fa",
+      "entityType": "SP.Data.OrdersListItem"
+    },
+    "OrderImport": {
+      "id": "0041f59a-c611-456b-8abb-b07c3cadee54",
+      "entityType": "SP.Data.OrderImportListItem"
+    },
+    "UC7Items": {
+      "id": "eeefe354-6a06-4eea-b8b2-bf543157e85c",
+      "entityType": "SP.Data.UC7ItemsListItem"
+    }
+  },
+  "customerLookupField": "Customer",
+  "uc9": {
+    "source": "https://davidlorenzolopez.sharepoint.com",
+    "driveId": "b!Ds3e92wKiUW7PnNf13j9PLhWSpi1oltLupRPY51fT7pTBqXN0o9aTqXtgwg84a1p",
+    "files": {
+      "SLOW": "01GFZXS5ZU3KQZSULQIFF2SWVJOPS3CM5H",
+      "FAST": "01GFZXS5ZP3ADPASGLMVBJUJYLQCUNFCTU"
+    },
+    "scriptDriveId": "b!Ds3e92wKiUW7PnNf13j9PLhWSpi1oltLupRPY51fT7pTBqXN0o9aTqXtgwg84a1p",
+    "scripts": {
+      "Uc9Reset": "01GFZXS5Y5IPOFORGEQVBLG2GZ7JUNLMIX",
+      "Uc9Stats": "01GFZXS55RRFT4ANQQYZEKYVAHVBWUILMI",
+      "Uc9WriteRows": "01GFZXS5YUREQKKP7TNFFIT62JVXR2APAQ"
+    },
+    "folder": "Shared Documents/FlowOptLab"
+  }
+}

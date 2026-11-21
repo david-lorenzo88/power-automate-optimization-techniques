@@ -1,0 +1,242 @@
+{
+  "UC1-SLOW": {
+    "workflowid": "5c1624a3-62e0-f111-84e8-0022480b18ff",
+    "flowId": "a93109a3-07d8-96a3-0877-5e199710c768",
+    "state": "on",
+    "app": true,
+    "scenario": "UC1",
+    "variant": "SLOW"
+  },
+  "UC1-FAST": {
+    "workflowid": "8197c3ac-62e0-f111-84e8-0022480b18ff",
+    "flowId": "fcd8ad46-3bd0-b342-c015-7bb2933486ec",
+    "state": "on",
+    "app": true,
+    "scenario": "UC1",
+    "variant": "FAST"
+  },
+  "UC2-SLOW": {
+    "workflowid": "c92454b4-62e0-f111-84ea-0022480b19a1",
+    "flowId": "9eb7810f-6dd1-557b-3cab-89ad4e843fb8",
+    "state": "on",
+    "app": true,
+    "scenario": "UC2",
+    "variant": "SLOW"
+  },
+  "UC2-FAST": {
+    "workflowid": "531224bb-62e0-f111-84e8-7ced8d6f7afa",
+    "flowId": "14eda8ad-0004-d39e-f25c-f2d0767f3da8",
+    "state": "on",
+    "app": true,
+    "scenario": "UC2",
+    "variant": "FAST"
+  },
+  "UC3-SLOW": {
+    "workflowid": "eef2a6c2-62e0-f111-84e8-0022480b18ff",
+    "flowId": "50896918-1771-94f9-3690-ab1265164813",
+    "state": "on",
+    "app": true,
+    "scenario": "UC3",
+    "variant": "SLOW"
+  },
+  "UC3-FAST": {
+    "workflowid": "1f540bca-62e0-f111-84e8-7ced8d6f7afa",
+    "flowId": "26dc28dc-c467-e639-2637-675407be0229",
+    "state": "on",
+    "app": true,
+    "scenario": "UC3",
+    "variant": "FAST"
+  },
+  "UC4-SLOW": {
+    "workflowid": "d3dd5dd1-62e0-f111-84ea-0022480b1720",
+    "flowId": "3754993f-efd2-29d8-4682-ddd6f97193e8",
+    "state": "on",
+    "app": true,
+    "scenario": "UC4",
+    "variant": "SLOW"
+  },
+  "UC4-MID": {
+    "workflowid": "9aa5d5d7-62e0-f111-84e8-0022480b18ff",
+    "flowId": "b63c3435-ea3a-4a9b-cfcc-2360eabb311d",
+    "state": "on",
+    "app": true,
+    "scenario": "UC4",
+    "variant": "MID"
+  },
+  "UC4-FAST": {
+    "workflowid": "671055e1-62e0-f111-84e8-7ced8d6f7afa",
+    "flowId": "d529edcf-97a4-7464-b0fc-c34f5741ef32",
+    "state": "on",
+    "app": true,
+    "scenario": "UC4",
+    "variant": "FAST"
+  },
+  "UC5-SLOW": {
+    "workflowid": "6cdf3be8-62e0-f111-84e8-7ced8d6f7afa",
+    "flowId": "8fb0d164-3102-17a0-8460-d1cc8b3002ba",
+    "state": "on",
+    "app": true,
+    "scenario": "UC5",
+    "variant": "SLOW"
+  },
+  "UC5-MID": {
+    "workflowid": "3b3265ef-62e0-f111-84ea-0022480b19a1",
+    "flowId": "580faa6f-e697-a5e7-f2c7-feb268d7722a",
+    "state": "on",
+    "app": true,
+    "scenario": "UC5",
+    "variant": "MID"
+  },
+  "UC5-FAST": {
+    "workflowid": "e27c3bf2-62e0-f111-84e8-0022480b18ff",
+    "flowId": "7afd7436-2c66-19c4-ac72-4e4282419daa",
+    "state": "on",
+    "app": true,
+    "scenario": "UC5",
+    "variant": "FAST"
+  },
+  "UC6-SLOW": {
+    "workflowid": "f17c3bf2-62e0-f111-84e8-0022480b18ff",
+    "flowId": "4d7028a6-479a-cf71-26b9-9e874f0ea72a",
+    "state": "on",
+    "app": true,
+    "scenario": "UC6",
+    "variant": "SLOW"
+  },
+  "UC6-FAST": {
+    "workflowid": "3665d0fb-62e0-f111-84e8-7ced8d6f7afa",
+    "flowId": "58b09a6c-2232-3bdf-365c-c679b2c329d1",
+    "state": "on",
+    "app": true,
+    "scenario": "UC6",
+    "variant": "FAST"
+  },
+  "UC6DV-SLOW": {
+    "workflowid": "9417e904-63e0-f111-84e8-0022480b18ff",
+    "flowId": "2a96f79b-1fec-5cc4-bb16-96440dc83d7f",
+    "state": "on",
+    "app": true,
+    "scenario": "UC6DV",
+    "variant": "SLOW"
+  },
+  "UC6DV-FAST": {
+    "workflowid": "9724df0a-63e0-f111-84e8-0022480b18ff",
+    "flowId": "69cdb920-36fd-fa16-06d9-6b12b766d181",
+    "state": "on",
+    "app": true,
+    "scenario": "UC6DV",
+    "variant": "FAST"
+  },
+  "UC7-DRIVER": {
+    "workflowid": "f5a20c12-63e0-f111-84e8-7ced8d6f7afa",
+    "flowId": "fab1071f-a911-cb68-48fe-0deaf74e6b73",
+    "state": "on",
+    "app": true,
+    "scenario": "UC7",
+    "variant": "DRIVER"
+  },
+  "UC7-SLOW": {
+    "workflowid": "e894d918-63e0-f111-84e8-7ced8d6f7afa",
+    "flowId": "6302f2e0-2fe2-65c3-2a89-0f3055176d4c",
+    "state": "on",
+    "app": false,
+    "scenario": "UC7",
+    "variant": "SLOW"
+  },
+  "UC7-FAST": {
+    "workflowid": "134b231f-63e0-f111-84e8-7ced8d6f7afa",
+    "flowId": "f7ee959f-f834-a990-6d27-9d8c33faa82e",
+    "state": "on",
+    "app": false,
+    "scenario": "UC7",
+    "variant": "FAST"
+  },
+  "UC8-SLOW": {
+    "workflowid": "a27bd523-63e0-f111-84e8-0022480b18ff",
+    "flowId": "1cb60c16-49fa-16cd-c26d-6eaaa9f5566c",
+    "state": "on",
+    "app": true,
+    "scenario": "UC8",
+    "variant": "SLOW"
+  },
+  "UC8-FAST": {
+    "workflowid": "af15d526-63e0-f111-84e8-7ced8d6f7afa",
+    "flowId": "4e6bdede-7208-f24e-f95a-e86916de126a",
+    "state": "on",
+    "app": true,
+    "scenario": "UC8",
+    "variant": "FAST"
+  },
+  "UC9-SLOW": {
+    "workflowid": "6fccea31-63e0-f111-84e8-0022480b18ff",
+    "flowId": "47335bc8-c515-017e-08e2-6a2b79a25ae3",
+    "state": "on",
+    "app": true,
+    "scenario": "UC9",
+    "variant": "SLOW"
+  },
+  "UC9-FAST": {
+    "workflowid": "8d739d2d-63e0-f111-84ea-0022480b19a1",
+    "flowId": "9e924172-6576-f2a2-89e7-9e48ed11035b",
+    "state": "on",
+    "app": true,
+    "scenario": "UC9",
+    "variant": "FAST"
+  },
+  "UC10-SLOW": {
+    "workflowid": "77482e31-63e0-f111-84e8-7ced8d6f7afa",
+    "flowId": "fa3c8d00-8a52-10ef-331f-0f87dafe5090",
+    "state": "on",
+    "app": true,
+    "scenario": "UC10",
+    "variant": "SLOW"
+  },
+  "UC10-CHILD": {
+    "workflowid": "3a2c5239-63e0-f111-84e8-7ced8d6f7afa",
+    "flowId": "b874190c-8d30-6e21-0d5d-33d931224a70",
+    "state": "on",
+    "app": false,
+    "scenario": "UC10",
+    "variant": "CHILD"
+  },
+  "SEED-SP": {
+    "workflowid": "801d303b-63e0-f111-84ea-0022480b19a1",
+    "flowId": "13676196-562f-f01c-eaff-0d3139754f3d",
+    "state": "on",
+    "app": true,
+    "scenario": "ADMIN",
+    "variant": "SEED-SP"
+  },
+  "SEED-DV": {
+    "workflowid": "b7917d44-63e0-f111-84e8-0022480b18ff",
+    "flowId": "983cde9e-a07c-1917-0e2c-adec8f380042",
+    "state": "on",
+    "app": true,
+    "scenario": "ADMIN",
+    "variant": "SEED-DV"
+  },
+  "RESET": {
+    "workflowid": "7a63d547-63e0-f111-84e8-7ced8d6f7afa",
+    "flowId": "82f9942a-f819-3aa7-d43d-88b806f2900c",
+    "state": "on",
+    "app": true,
+    "scenario": "ADMIN",
+    "variant": "RESET"
+  },
+  "UC10-FAST": {
+    "workflowid": "8464fc45-63e0-f111-84ea-0022480b19a1",
+    "flowId": "3ee91a6e-1ea1-fade-303c-905316db284e",
+    "state": "on",
+    "app": true,
+    "scenario": "UC10",
+    "variant": "FAST"
+  },
+  "LAB-TestRunner": {
+    "workflowid": "0429a950-63e0-f111-84ea-0022480b19a1",
+    "flowId": "fdb736af-04e1-6cac-1e15-4ea47768d411",
+    "state": "on",
+    "app": false,
+    "scenario": "ADMIN",
+    "variant": "RUNNER"
+  }
+}

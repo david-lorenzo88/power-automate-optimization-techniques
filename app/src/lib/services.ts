@@ -54,10 +54,16 @@ export function discoverServices(): Promise<DiscoveredService[]> {
 
 export async function findFlow(namePart: string): Promise<FlowRunner | undefined> {
   const n = normalize(namePart);
-  const svc = (await discoverServices()).find((s) => s.kind === 'flow' && s.key.includes(n));
+  const flows = (await discoverServices()).filter((s) => s.kind === 'flow');
+  // Exact name first ("UC1-SLOW" → UC1_SLOWService), so UC1 never resolves to UC10.
+  const svc = flows.find((s) => s.key === n || s.key === `${n}service`) ?? flows.find((s) => s.key.includes(n));
   if (!svc) return undefined;
   const impl = svc.impl as { Run: FlowRunner };
   return (input) => impl.Run(input);
+}
+
+export async function hasFlow(namePart: string): Promise<boolean> {
+  return (await findFlow(namePart)) !== undefined;
 }
 
 export async function findTable(namePart: string): Promise<TableService | undefined> {

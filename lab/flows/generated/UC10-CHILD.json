@@ -1,0 +1,132 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "PowerAppV2",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "title": "payload",
+                  "type": "string",
+                  "description": "JSON payload from the Code App",
+                  "x-ms-dynamically-added": true,
+                  "x-ms-content-hint": "TEXT"
+                }
+              },
+              "required": [
+                "text"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Payload": {
+          "type": "Compose",
+          "inputs": "@json(coalesce(triggerBody()?['text'], '{}'))",
+          "runAfter": {}
+        },
+        "Init_Total": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "Total",
+                "type": "integer",
+                "value": 0
+              }
+            ]
+          },
+          "runAfter": {
+            "Payload": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Loop": {
+          "type": "Foreach",
+          "foreach": "@range(int(outputs('Payload')?['start']), int(outputs('Payload')?['count']))",
+          "actions": {
+            "Value": {
+              "type": "Compose",
+              "inputs": "@mod(mul(items('Loop'), 7), 13)",
+              "runAfter": {}
+            },
+            "Add_value": {
+              "type": "IncrementVariable",
+              "inputs": {
+                "name": "Total",
+                "value": "@outputs('Value')"
+              },
+              "runAfter": {
+                "Value": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Init_Total": [
+              "Succeeded"
+            ]
+          },
+          "runtimeConfiguration": {
+            "concurrency": {
+              "repetitions": 1
+            }
+          }
+        },
+        "Respond": {
+          "type": "Response",
+          "kind": "PowerApp",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "sum": "@variables('Total')",
+              "count": "@int(outputs('Payload')?['count'])"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "sum": {
+                  "title": "sum",
+                  "type": "number",
+                  "x-ms-dynamically-added": true
+                },
+                "count": {
+                  "title": "count",
+                  "type": "number",
+                  "x-ms-dynamically-added": true
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Loop": [
+              "Succeeded"
+            ]
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}
