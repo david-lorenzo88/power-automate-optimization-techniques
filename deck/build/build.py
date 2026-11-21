@@ -11,7 +11,11 @@ from lib import *
 
 base, out, lib.ICON_DIR = sys.argv[1], sys.argv[2], sys.argv[3]
 prs = Presentation(base)
-S = list(prs.slides)
+ALL = list(prs.slides)
+# 32 slides: two slides added after the first share (measured results, UC10 + 120 s rule);
+# S keeps the original 30-slide numbering so the content below stays readable.
+S = [ALL[0], ALL[1]] + ALL[3:27] + ALL[28:32]
+NEW_MEASURED, NEW_UC10 = ALL[2], ALL[27]
 DEMO_X, DEMO_Y = W - 1.12 - 3.9, 2.45
 
 
@@ -40,7 +44,7 @@ for shp in s.shapes:
         set_runs(shp, ['Power Automate optimization techniques that actually work'], size=30)
     elif t.startswith('Presented'):
         shp.width = Inches(7.0)
-        set_runs(shp, ['Presented by: David Lorenzo', 'Experts Live Emirates  ·  24 Nov 2026'], size=21)
+        set_runs(shp, ['Presented by: David Lorenzo López & Samir', 'Experts Live Emirates  ·  24 Nov 2026'], size=21)
 notes(s, "Welcome. 50 minutes, almost all demos. Every technique is shown as a SLOW flow and a FAST flow with the same "
          "input and the same result checksum, launched from the Flow Optimization Lab app so you see real timings.")
 
@@ -186,6 +190,7 @@ for i, (lab, frac, col) in enumerate(bars):
     text(s, 11.6, y, 2.3, 0.5, lab, size=17, color=INK, anchor='m')
     shape(s, MSO_SHAPE.RECTANGLE, 14.0, y + 0.1, max(0.08, 4.2 * frac), 0.32, fill=col)
 text(s, 11.6, 8.55, 6.6, 0.5, 'One loop, 86% of the run time', size=19, color=SLOW)
+text(s, 1.12, 9.75, 10.2, 0.6, 'Measured in our tenant: flowrun.duration is in milliseconds, and new runs show up there after a few minutes.', size=15, color=MUTED_L)
 notes(s, "Open the SLOW run of the hook demo via the 'Open run' link in the app. Show the action durations, expand the loop, "
          "show the per-iteration time. Mention the flowrun table in Dataverse (28-day default retention) and Automation Center "
          "for trends across flows. The bar chart on this slide is illustrative.")
@@ -196,13 +201,13 @@ divider(S[8], '02', 'Kill unnecessary loops', 'Select, Filter array and expressi
 
 # ------------------------------------------------------------------ 10 · Before / after (light spotlight)
 s = S[9]
-kicker_title(s, 'Data shaping', '2 actions instead of 15,000', dark=False, centered=True)
+kicker_title(s, 'Data shaping', '130× faster, same result', dark=False, centered=True)
 demo(s, 'LIVE · UC1 shaping')
 for col, (x, head, hcol, acts, foot) in enumerate([
-    (3.4, 'SLOW', SLOW, [('Apply to each', '5,000 orders', 0), ('Condition', "Status = 'Open'", 1), ('Compose', 'build the new object', 1), ('Append to array variable', 'collect the result', 1)],
-     '≈ 3 actions × 5,000 items = 15,000 billed actions'),
+    (3.4, 'SLOW', SLOW, [('Apply to each', '500 orders', 0), ('Condition', "Status = 'Open'", 1), ('Compose', 'build the new object', 1), ('Append to array variable', 'collect the result', 1)],
+     'Measured: 113.9 s and 664 actions for 500 orders'),
     (10.6, 'FAST', FAST, [('Filter array', "Status eq 'Open'", 0), ('Select', 'map to the new shape', 0)],
-     '2 actions, whatever the volume')]):
+     'Measured: 0.9 s and 17 actions, same checksum')]):
     card(s, x, 4.1, 6.0, 5.6)
     text(s, x + 0.4, 4.35, 5.0, 0.5, head, size=22, color=hcol)
     for j, (a, b, ind) in enumerate(acts):
@@ -239,9 +244,9 @@ notes(s, "Reference slide: share it, don't read it. Highlight union for distinct
 s = S[11]
 kicker_title(s, 'Joins', 'Joins without nested loops', dark=True)
 demo(s, 'LIVE · UC2 join')
-tiers = [('Nested loop', '10,000,000', 'iterations (5,000 × 2,000): never finishes', SLOW),
-         ('Get item per order', '5,000', 'API calls, one per row', 'F5A524'),
-         ('Dictionary lookup', '3', 'actions, whatever the volume', FAST_D)]
+tiers = [('Nested loop, 5,000 × 2,000', '10,000,000', 'iterations: never finishes', SLOW),
+         ('Query the customer per order', '3.0 min', 'measured: 201 connector calls for 200 orders', 'F5A524'),
+         ('Dictionary lookup', '1.5 s', 'measured: 2 connector calls, 124× faster', FAST_D)]
 for i, (lab, num, sub, col) in enumerate(tiers):
     y = 3.85 + i * 2.05
     card(s, 1.12, y, 6.6, 1.8, dark=True)
@@ -305,7 +310,7 @@ code(s, 1.12, 3.85, 11.4, 6.3, [
     [('Average  ', CYAN), ('div(Sum, Count)', CODE_FG)],
     [('Max      ', CYAN), ("max(body('Select_Amounts_as_numbers'))", CODE_FG)],
 ], size=20)
-facts = [('5,000 rows', 'aggregated with 3 to 6 actions'), ('Any array', 'SharePoint, Dataverse, Excel, HTTP'), ('No variables', 'nothing to lock, nothing to race')]
+facts = [('177× faster', 'measured: 4.2 min → 1.4 s, same totals'), ('947 → 20', 'actions per run (estimated by the flows)'), ('No variables', 'nothing to lock, nothing to race')]
 for i, (a, b) in enumerate(facts):
     y = 3.85 + i * 2.15
     card(s, 13.0, y, 4.3, 1.9, dark=True)
@@ -348,9 +353,9 @@ divider(S[16], '04', 'Go bulk or go home', '$batch, bulk operation messages and 
 s = S[17]
 kicker_title(s, 'Bulk options', 'One request, many records', dark=False, centered=True)
 rows = [['Option', 'Per request', 'All-or-nothing', 'Best for'],
-        ['SharePoint $batch', '~100–1,000 (test it)', 'Verify per tenant', 'List items, standard licence'],
+        ['SharePoint $batch', '≤ 500 (~90 s server limit)', 'No: each part commits', 'List items, standard licence'],
         ['Dataverse $batch', 'Up to 1,000', 'Yes, per changeset', 'Mixed operations, parent + children'],
-        ['CreateMultiple · UpdateMultiple · UpsertMultiple', '100–1,000', 'Yes (standard tables)', 'Fastest create and update'],
+        ['CreateMultiple · UpdateMultiple · UpsertMultiple', '100–1,000', 'Yes (standard tables)', 'Fastest; call via HTTP with Entra ID'],
         ['DeleteMultiple', '100 (elastic only)', 'Partial success', 'Elastic tables'],
         ['BulkDelete', 'Query-based job', 'Async system job', 'Large deletes on standard tables'],
         ['Office Scripts (Excel)', 'Whole table, one call', 'n/a', 'Replacing Add a row loops'],
@@ -364,15 +369,15 @@ notes(s, "Map of the bulk surfaces. Dataverse: bulk messages are the fastest pat
 s = S[18]
 kicker_title(s, 'Anatomy', 'A $batch request, built without a loop', dark=True)
 demo(s, 'LIVE · UC4 + UC5 bulk')
-card(s, 1.12, 3.85, 8.4, 6.2, dark=True)
+card(s, 1.12, 3.85, 8.4, 5.9, dark=True)
 text(s, 1.5, 4.1, 7.8, 0.5, 'POST _api/$batch   multipart/mixed', size=18, color=CYAN, font=CODE)
-shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, 1.5, 4.8, 7.65, 4.85, fill='13246F', line=CARD_D_LINE, radius=0.05)
-text(s, 1.85, 5.0, 7.0, 0.5, '--changeset   (all or nothing)', size=17, color=VIOLET, font=CODE)
+shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, 1.5, 4.8, 7.65, 4.6, fill='13246F', line=CARD_D_LINE, radius=0.05)
+text(s, 1.85, 5.0, 7.0, 0.5, '--changeset   (SharePoint: not atomic)', size=17, color=VIOLET, font=CODE)
 for j, t in enumerate(['POST …/items  {"Title":"#1"}', 'POST …/items  {"Title":"#2"}', 'POST …/items  {"Title":"#3"}', '… one part per record']):
     y = 5.65 + j * 0.92
     shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, 1.85, y, 6.95, 0.72, fill='1C2F86' if j < 3 else '13246F', line=CARD_D_LINE, radius=0.15)
     text(s, 2.1, y, 6.5, 0.72, t, size=16, color=LAV, font=CODE, anchor='m')
-steps = [('chunk(items, 500)', 'loop over chunks, not items'),
+steps = [('chunk(items, 250)', 'loop over chunks, 4 in parallel'),
          ('Select', 'one MIME part per record'),
          ('join()', 'parts + boundaries = request body'),
          ('Send an HTTP request', 'one call per chunk'),
@@ -383,6 +388,8 @@ for i, (a, b) in enumerate(steps):
     text(s, 10.1, y + 0.1, 0.65, 0.65, str(i + 1), size=19, color='FFFFFF', align='c', anchor='m')
     text(s, 11.0, y, 6.3, 0.5, a, size=20, color=CYAN, font=CODE)
     text(s, 11.0, y + 0.5, 6.3, 0.45, b, size=17, color=LAV)
+text(s, 1.12, 9.95, 16.2, 0.5, 'Measured, 1,000 SharePoint items: SLOW 11.1 min · MID (concurrency 50) 83 s · FAST 44.9 s → 15× faster. One batch stops after ~90 s of server time.',
+     size=16, color=MUTED_D)
 notes(s, "Demo UC4 (SharePoint, 1,000 items): SLOW is Create item in a loop; MID is the same loop at concurrency 50 - watch the "
          "429s; FAST builds the multipart body with Select + join and sends it in a couple of calls. Then UC5 on Dataverse "
          "with CreateMultiple / UpsertMultiple at 1,000 records per call.")
@@ -390,8 +397,8 @@ notes(s, "Demo UC4 (SharePoint, 1,000 items): SLOW is Create item in a loop; MID
 # ------------------------------------------------------------------ 20 · Changesets (light)
 s = S[19]
 kicker_title(s, 'Transactions', 'All or nothing with changesets', dark=False)
-rowsdef = [('Changeset, 1 invalid record', 'Nothing written: the whole changeset rolls back', ['bad'] + ['rolled'] * 9, SLOW),
-           ('No changeset + continue-on-error', '99 written, 1 error reported in the response', ['ok'] * 4 + ['bad'] + ['ok'] * 5, FAST)]
+rowsdef = [('Dataverse CreateMultiple, 1 invalid record', 'Measured: 0 of 100 written, the whole request rolled back', ['bad'] + ['rolled'] * 9, SLOW),
+           ('Loop of Add a new row, 1 invalid record', 'Measured: 19 of 20 written, the flow ends Partial', ['ok'] * 4 + ['bad'] + ['ok'] * 5, FAST)]
 for i, (head, foot, cells, col) in enumerate(rowsdef):
     y = 3.85 + i * 2.85
     card(s, 1.12, y, 10.2, 2.55)
@@ -400,11 +407,11 @@ for i, (head, foot, cells, col) in enumerate(rowsdef):
         fill = {'ok': FAST, 'bad': SLOW, 'rolled': 'D7DAEE'}[st]
         shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, 1.5 + k * 0.92, y + 0.95, 0.75, 0.75, fill=fill, radius=0.18)
     text(s, 1.5, y + 1.85, 9.4, 0.5, foot, size=17, color=col)
-text(s, 1.12, 9.6, 10.2, 0.4, 'Each square = 10 records of a 100-record batch', size=14, color=MUTED_L)
+text(s, 1.12, 9.6, 10.2, 0.4, 'Each square ≈ 10% of the batch', size=14, color=MUTED_L)
 pts = [('Atomic in Dataverse', 'One failure rolls back the whole changeset'),
        ('Content-ID references', 'Create a parent and its children in one transaction'),
        ('Throttling vs entitlement', 'A bulk call is one request for throttling; each record still counts as a Power Platform request'),
-       ('SharePoint', 'Changeset behaviour differs: test it on your tenant')]
+       ('SharePoint is different', 'Not atomic: with 1 bad item, the other 99 were still committed (measured)')]
 for i, (a, b) in enumerate(pts):
     y = 3.85 + i * 1.4
     icon(s, ['lock', 'key', 'speed', 'list'][i], 12.0, y, 0.75, circle=BLUE)
@@ -432,7 +439,7 @@ for i, (lab, w, fill, fg) in enumerate(layers):
     x = (W - w) / 2
     shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, 1.0, fill=fill, radius=0.2)
     text(s, x, y, w, 1.0, lab, size=19 if i else 20, color=fg, align='c', anchor='m', font=CODE if 0 < i < 4 else FONT)
-text(s, 3.5, 9.95, 13.0, 0.5, 'Dataverse: FetchXML aggregates or $apply=groupby let the server do the maths', size=17, color=MUTED_L, align='c')
+text(s, 3.5, 9.95, 13.0, 0.5, 'Measured: 59.6 s → 1.1 s and 5.7 MB → 11 KB (53×). Dataverse FetchXML aggregate: 10.1 MB → 1 KB (36×)', size=17, color=MUTED_L, align='c')
 notes(s, "Demo UC6. SLOW: Get items with pagination at 100,000 and all columns, then Filter array and a Get item per row for the "
          "customer. FAST: Filter Query + $select + $expand on the lookup + $top. Show the payload size KPI in the app. "
          "Mention indexed columns for lists over 5,000 items and the Dataverse Row count option.")
@@ -461,7 +468,7 @@ code(s, 10.4, 3.85, 6.9, 2.35, [
 text(s, 10.4, 6.6, 6.9, 2.8, [dict(runs='Dataverse triggers: use Filter rows and Select columns as well', bullet=True, bullet_color=CYAN, space_after=10),
                                 dict(runs='No run means no billed actions and no history noise', bullet=True, bullet_color=CYAN)],
      size=19, color=LAV)
-text(s, 1.12, 10.1, 9, 0.4, 'Each dot = 5 runs. Scenario: 100 item edits, 10 relevant', size=14, color=MUTED_D)
+text(s, 1.12, 10.1, 9, 0.4, 'Measured: 100 item edits, 1 in 10 relevant. Each dot = 5 runs', size=14, color=MUTED_D)
 notes(s, "Demo UC7. The app launches a driver flow that edits 100 SharePoint items; only 10 become 'Approved'. "
          "The flow without a trigger condition runs 100 times; the one with the condition runs 10 times. Show the run count in the app.")
 
@@ -477,7 +484,7 @@ knobs = [('random', 'Concurrency', 'Default 1. Raise to 20–50 for independent 
          ('cube', 'Compose vs variables', 'Compose for values set once. Variables lock inside concurrent loops.'),
          ('stream', 'Parallel branches', 'Independent calls side by side: total time = the slowest branch.'),
          ('redo', 'Retry policy', 'Honour 429 and Retry-After. Keep batch calls idempotent.'),
-         ('bolt', 'Respond early', 'Answer the caller, keep working, stay clear of the 120 s limit.')]
+         ('bolt', 'Respond early', 'A late response fails at 120 s and marks the run Failed. Answer first.')]
 kw, kh, kgx, kgy = 5.6, 2.55, 0.48, 0.38
 for i, (ic, a, b) in enumerate(knobs):
     x = 1.12 + (i % 3) * (kw + kgx); y = 3.75 + (i // 3) * (kh + kgy)
@@ -505,6 +512,7 @@ for j, (lab, vals, col) in enumerate([('Expected', ['A', 'B', 'C', 'D'], FAST_D)
     for k, v in enumerate(vals):
         shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, 3.5 + k * 1.05, y, 0.85, 0.8, fill=col, radius=0.18)
         text(s, 3.5 + k * 1.05, y, 0.85, 0.8, v, size=24, color=NAVY, align='c', anchor='m')
+text(s, 1.12, 10.05, 9.0, 0.45, 'Measured checksum: SLOW 100 | 12,163.15 vs FAST 1,000 | 499,995.00', size=15, color=MUTED_D)
 fixes = [('Keep state per iteration', 'Use item() or a Compose inside the loop, never a shared variable'),
          ('No side effect? No loop', 'A Select does the same job in one action'),
          ('Respect the target', 'SharePoint: 600 calls/min. Dataverse: 52 concurrent requests'),
@@ -517,45 +525,40 @@ for i, (a, b) in enumerate(fixes):
 notes(s, "Demo UC8: the concurrent loop with Set variable returns wrong values; same loop with item()/Compose is correct. "
          "Then the pagination trap: Get items without pagination silently returns 100 items - a correctness bug, not just speed.")
 
-# ------------------------------------------------------------------ 27 · Actions chart (light spotlight)
+# ------------------------------------------------------------------ 27 · Scoreboard (light spotlight, measured)
 s = S[26]
-kicker_title(s, 'Scoreboard', 'Billed actions per run', dark=False, centered=True)
+kicker_title(s, 'Scoreboard', 'Every pair, measured', dark=False, centered=True)
+score = [('UC3 Aggregation (100)', 177), ('UC1 Data shaping (500)', 130), ('UC2 Join (200)', 124), ('UC6 Filter at source (2,000)', 53),
+         ('UC9 Excel (500)', 43), ('UC6 Dataverse aggregate (5,000)', 36), ('UC5 Dataverse bulk (1,000)', 32),
+         ('UC4 SharePoint bulk (1,000)', 15), ('UC10 Fan-out (200)', 12)]
 cd = CategoryChartData()
-cd.categories = ['UC1 Data shaping', 'UC2 Join', 'UC3 Aggregation', 'UC4 SharePoint bulk*', 'UC5 Dataverse bulk']
-cd.add_series('SLOW', (15002, 10000, 15000, 1000, 5000))
-cd.add_series('FAST', (3, 4, 6, 6, 8))
-gf = s.shapes.add_chart(XL_CHART_TYPE.BAR_CLUSTERED, Inches(3.4), Inches(3.75), Inches(13.2), Inches(5.65), cd)
-gf.name = 'Actions per run chart'
+cd.categories = [c for c, _ in score]
+cd.add_series('Speed-up', [v for _, v in score])
+gf = s.shapes.add_chart(XL_CHART_TYPE.BAR_CLUSTERED, Inches(3.2), Inches(3.7), Inches(13.6), Inches(5.9), cd)
+gf.name = 'Speed-up chart'
 ch = gf.chart
-ch.has_legend = True; ch.legend.position = XL_LEGEND_POSITION.TOP; ch.legend.include_in_layout = False
-ch.legend.font.size = Pt(17); ch.legend.font.name = FONT; ch.legend.font.color.rgb = rgb(INK)
+ch.has_legend = False
+ch.has_title = False
 ch.font.name = FONT; ch.font.size = Pt(16); ch.font.color.rgb = rgb(INK)
-plot = ch.plots[0]; plot.gap_width = 60; plot.overlap = -10
+plot = ch.plots[0]; plot.gap_width = 45
 plot.has_data_labels = True
-dl = plot.data_labels; dl.number_format = '#,##0'; dl.number_format_is_linked = False
-dl.position = XL_LABEL_POSITION.OUTSIDE_END; dl.font.size = Pt(15); dl.font.color.rgb = rgb(INK)
-for ser, col in zip(plot.series, (SLOW, FAST)):
-    ser.format.fill.solid(); ser.format.fill.fore_color.rgb = rgb(col)
+dl = plot.data_labels; dl.number_format = '0"×"'; dl.number_format_is_linked = False
+dl.position = XL_LABEL_POSITION.OUTSIDE_END; dl.font.size = Pt(16); dl.font.color.rgb = rgb(INK)
+ser = plot.series[0]; ser.format.fill.solid(); ser.format.fill.fore_color.rgb = rgb(BLUE)
 ca = ch.category_axis; ca.reverse_order = True; ca.tick_labels.font.size = Pt(16); ca.format.line.color.rgb = rgb('C9CDF0')
 ca.has_major_gridlines = False
-va = ch.value_axis; va.visible = False; va.has_major_gridlines = False
-scaling = va._element.find(qn('c:scaling'))
-lb = etree.Element(qn('c:logBase')); lb.set('val', '10'); scaling.insert(0, lb)
-va.minimum_scale = 1; va.maximum_scale = 100000
-# chart text font
-txPr = ch._chartSpace.find(qn('c:txPr'))
-text(s, 3.4, 9.55, 13.2, 0.8, 'Estimated from each flow’s design at 5,000 records (*UC4: 1,000 items), log scale. Timings are measured live in the Lab app.',
+va = ch.value_axis; va.visible = False; va.has_major_gridlines = False; va.minimum_scale = 0; va.maximum_scale = 200
+text(s, 3.2, 9.75, 13.6, 0.6, 'SLOW ÷ FAST duration, same checksum for every pair. PREMIUM-US demo environment, November 2026. Volume in brackets.',
      size=15, color=MUTED_L, align='c')
-notes(s, "Close the loop with the scoreboard in the Lab app (live timings and speed-ups for every run today). This chart shows the "
-         "other half of the cost: billed actions per run, estimated from each flow's design. Note the log scale: "
-         "15,000 vs 3 is not a rounding error.")
+notes(s, "Every pair measured in the lab (lab/RESULTS.md), and every pair returned the same checksum. "
+         "Switch to the scoreboard in the Lab app to show today's live runs next to these.")
 
 # ------------------------------------------------------------------ 28 · Takeaways (light)
 s = S[27]
 kicker_title(s, 'Takeaways', 'Five things to do tomorrow morning', dark=False)
 tks = [('Find the action that owns the run', 'Run history, action timings, flowrun table'),
        ('Replace data-shaping loops', 'Select, Filter array, dictionary joins, xpath'),
-       ('Batch your writes', '$batch and bulk messages, changesets for safety'),
+       ('Batch your writes', '$batch ≤ 500 per call, CreateMultiple for Dataverse'),
        ('Ask the source for less', '$filter, $select, $expand, trigger conditions'),
        ('Tune deliberately', 'Concurrency, pagination, Compose over variables')]
 for i, (a, b) in enumerate(tks):
@@ -592,6 +595,44 @@ notes(s, "Point to the repo for the flows, the Code App and the scripts. Make su
 s = S[29]
 text(s, 1.55, 7.45, 9.0, 0.8, 'Questions?', size=40, color=CYAN)
 notes(s, "Thank the audience. Leave the Lab scoreboard open on screen during Q&A.")
+
+# ------------------------------------------------------------------ 3 (new) · Measured, not promised (light spotlight)
+s = NEW_MEASURED
+kicker_title(s, 'Measured, not promised', 'Same result, up to 177× faster', dark=False, centered=True)
+top = [('177×', 'Aggregation per region', '4.2 min → 1.4 s · 100 orders'),
+       ('130×', 'Data shaping', '113.9 s → 0.9 s · 500 orders'),
+       ('124×', 'Join / enrichment', '3.0 min → 1.5 s · 200 orders')]
+mw, mg = 4.3, 0.5
+mx0 = (W - (3 * mw + 2 * mg)) / 2
+for i, (num, lab, sub) in enumerate(top):
+    x = mx0 + i * (mw + mg)
+    card(s, x, 4.3, mw, 4.3, radius=0.08)
+    text(s, x + 0.45, 4.65, mw - 0.9, 1.4, num, size=80, color=BLUE)
+    text(s, x + 0.45, 6.25, mw - 0.9, 0.9, lab, size=22, color=INK)
+    text(s, x + 0.45, 7.55, mw - 0.9, 0.7, sub, size=17, color=MUTED_L)
+text(s, 3.5, 9.05, 13.0, 0.6, 'PREMIUM-US demo environment, November 2026. Every SLOW/FAST pair returns an identical checksum.',
+     size=17, color=MUTED_L, align='c')
+notes(s, "Not a promise, a measurement: three of the pairs we will run today, measured in our demo tenant last week. "
+         "Same input, same checksum, only the technique changes. The full scoreboard comes at the end.")
+
+# ------------------------------------------------------------------ 28 (new) · UC10 + 120-second rule (light)
+s = NEW_UC10
+kicker_title(s, 'Fan-out and the 120-second rule', 'Parallelize the work, answer the caller first', dark=False)
+demo(s, 'LIVE · UC10 fan-out')
+card(s, 1.12, 3.8, 8.6, 5.3)
+text(s, 1.55, 4.15, 7.8, 0.5, 'Fan-out to child flows', size=20, color=BLUE)
+text(s, 1.55, 4.75, 7.8, 1.2, [[('76.0 s', {'color': SLOW}), (' → ', {'color': MUTED_L}), ('6.2 s', {'color': FAST})]], size=60)
+text(s, 1.55, 6.25, 7.8, 1.5, '200 records: one sequential loop vs chunk() into 10 chunks, Apply to each with concurrency 10, one child flow per chunk.',
+     size=18, color=INK, line=1.1)
+text(s, 1.55, 7.9, 7.8, 1.0, 'Fan-out saves wall-clock time, not actions: the work moves into the child flows.', size=16, color=MUTED_L, line=1.1)
+card(s, 10.3, 3.8, 8.6, 5.3, fill=NAVY, line=NAVY)
+text(s, 10.75, 4.15, 7.8, 0.5, 'Respond early', size=20, color=CYAN)
+text(s, 10.75, 4.75, 7.8, 1.2, [[('120 s', {'color': 'FF8A8E'}), (' → ', {'color': MUTED_D}), ('~1 s', {'color': FAST_D})]], size=60)
+text(s, 10.75, 6.25, 7.8, 1.5, 'Respond at the end of a 150 s flow: Run() fails at 120 s, and the run shows Failed even though the work finished.',
+     size=18, color=LAV, line=1.1)
+text(s, 10.75, 7.9, 7.8, 1.0, 'Respond first, then work, and report progress through Dataverse.', size=16, color=MUTED_D, line=1.1)
+notes(s, "Demo UC10: the same 200 records, sequential vs fan-out to child flows. Then the 120-second rule we hit while building the Lab app: "
+         "a flow called from Power Apps must answer within 120 s, so the Lab flows respond in about a second and keep working.")
 
 prs.save(out)
 print('saved', out)

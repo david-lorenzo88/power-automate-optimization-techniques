@@ -2,7 +2,7 @@ import sys, re, subprocess, zipfile, shutil, os
 SK, tpl, out_dir = sys.argv[1], sys.argv[2], sys.argv[3]
 # T=title(1) S=divider(2) L3=spotlight light(3) D=dark(4) L5=light(5) E=end(6)
 src = {'T':'slide1.xml','S':'slide2.xml','L3':'slide3.xml','D':'slide4.xml','L5':'slide5.xml','E':'slide6.xml'}
-order = ['T','D','L5','D','L3','D', 'S','L5', 'S','L3','L5','D','L3', 'S','D','L5', 'S','L3','D','L5', 'S','L3','D', 'S','L5','D','L3','L5','D','E']
+order = ['T','D','L3', 'L5','D','L3','D', 'S','L5', 'S','L3','L5','D','L3', 'S','D','L5', 'S','L3','D','L5', 'S','L3','D', 'S','L5','D','L5','L3','L5','D','E']
 shutil.rmtree(out_dir, ignore_errors=True)
 zipfile.ZipFile(tpl).extractall(out_dir)
 new = []
