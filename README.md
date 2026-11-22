@@ -30,3 +30,7 @@ two agent skills plus a flow linter, to use alongside Microsoft's `power-automat
 ```bash
 /plugin install power-automate-best-practices@power-automate-optimization
 ```
+
+## License
+
+[MIT](LICENSE)
